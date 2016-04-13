@@ -8,7 +8,7 @@ separator nonempty Def "" ;
 FnDef.           Def     ::= Type Ident "(" [Arg] ")" Block ;
 separator  Arg "," ;
 
-DArg.            Arg     ::= Type Ident;
+DArg.            Arg     ::= Type Ident ;
 
 ----------------------- Statements ----------------------------
 
@@ -24,7 +24,7 @@ SDecr.           Stm     ::= Ident "--"  ";" ;
 SRet.            Stm     ::= "return" Exp ";" ;
 SVRet.           Stm     ::= "return" ";" ;
 Sif.             Stm     ::= "if" "(" Exp ")" Stm  ;
-SIfElse.         Stm     ::= "if" "(" Exp ")" Stm "else" Stm  ;
+SIfElse.         Stm     ::= "if" "(" Exp ")" Stm "else" Stm ;
 SWhile.          Stm     ::= "while" "(" Exp ")" Stm ;
 SExp.            Stm     ::= Exp  ";" ;
 
@@ -39,7 +39,7 @@ TDoub.           Type    ::= "double" ;
 TBool.           Type    ::= "boolean" ;
 TVoid.           Type    ::= "void" ;
 
-internal Fun.    Type    ::= Type "(" [Type] ")" ;
+internal TFun.   Type    ::= Type "(" [Type] ")" ;
 separator Type "," ;
 
 ------------------------ Expessions ---------------------------
@@ -56,12 +56,13 @@ ERel.            Exp2    ::= Exp2 RelOp Exp3 ;
 EAnd.            Exp1    ::= Exp2 "&&" Exp1 ;
 EOr.             Exp     ::= Exp1 "||" Exp ;
 coercions Exp 6 ;
+internal EType.  Exp     ::= Type Exp ;  --correct?
 separator Exp "," ;
 
 ------------------------- Literals ----------------------------
 
 LInt.            Lit     ::= Integer ;
-LDoub.           Lit     ::= Double;
+LDoub.           Lit     ::= Double ;
 LTrue.           Lit     ::= "true" ;
 LFalse.          Lit     ::= "false" ;
 
