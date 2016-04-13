@@ -1,0 +1,88 @@
+------------------------ Programs -----------------------------
+
+entrypoints Program ;
+
+PProg.           Program ::= [Def] ;
+separator nonempty Def "" ;
+
+FnDef.           Def     ::= Type Ident "(" [Arg] ")" Block ;
+separator  Arg "," ;
+
+DArg.            Arg     ::= Type Ident;
+
+----------------------- Statements ----------------------------
+
+DBlock.          Block   ::= "{" [Stm] "}" ;
+separator  Stm "" ;
+
+SEmpty.          Stm     ::= ";" ;
+SBlock.          Stm     ::= Block ;
+SDecl.           Stm     ::= Type [Item] ";" ;
+SAss.            Stm     ::= Ident "=" Exp  ";" ;
+SIncr.           Stm     ::= Ident "++"  ";" ;
+SDecr.           Stm     ::= Ident "--"  ";" ;
+SRet.            Stm     ::= "return" Exp ";" ;
+SVRet.           Stm     ::= "return" ";" ;
+Sif.             Stm     ::= "if" "(" Exp ")" Stm  ;
+SIfElse.         Stm     ::= "if" "(" Exp ")" Stm "else" Stm  ;
+SWhile.          Stm     ::= "while" "(" Exp ")" Stm ;
+SExp.            Stm     ::= Exp  ";" ;
+
+IDecl.           Item    ::= Ident ; 
+IInit.           Item    ::= Ident "=" Exp ;
+separator nonempty Item "," ;
+
+-------------------------- Types ------------------------------
+
+TInt.            Type    ::= "int" ;
+TDoub.           Type    ::= "double" ;
+TBool.           Type    ::= "boolean" ;
+TVoid.           Type    ::= "void" ;
+
+internal Fun.    Type    ::= Type "(" [Type] ")" ;
+separator Type "," ;
+
+------------------------ Expessions ---------------------------
+
+EVar.            Exp6    ::= Ident ;
+ELit.            Exp6    ::= Lit ;
+EApp.            Exp6    ::= Ident "(" [Exp] ")" ;
+EString.         Exp6    ::= String ;
+Neg.             Exp5    ::= "-" Exp6 ;
+Not.             Exp5    ::= "!" Exp6 ;
+EMul.            Exp4    ::= Exp4 MulOp Exp5 ;
+EAdd.            Exp3    ::= Exp3 AddOp Exp4 ;
+ERel.            Exp2    ::= Exp2 RelOp Exp3 ;
+EAnd.            Exp1    ::= Exp2 "&&" Exp1 ;
+EOr.             Exp     ::= Exp1 "||" Exp ;
+coercions Exp 6 ;
+separator Exp "," ;
+
+------------------------- Literals ----------------------------
+
+LInt.            Lit     ::= Integer ;
+LDoub.           Lit     ::= Double;
+LTrue.           Lit     ::= "true" ;
+LFalse.          Lit     ::= "false" ;
+
+------------------------- Operators ---------------------------
+
+Plus.            AddOp   ::= "+" ;
+Minus.           AddOp   ::= "-" ;
+
+Times.           MulOp   ::= "*" ;
+Div.             MulOp   ::= "/" ;
+Mod.             MulOp   ::= "%" ;
+
+Lt.              RelOp   ::= "<" ;
+LtEq.            RelOp   ::= "<=" ;
+Gt.              RelOp   ::= ">" ;
+GtEq.            RelOp   ::= ">=" ;
+Eq.              RelOp   ::= "==" ;
+NEq.             RelOp   ::= "!=" ;
+
+-------------------------- Comments ---------------------------
+
+comment "#" ;
+comment "//" ;
+comment "/*" "*/" ;
