@@ -2,7 +2,7 @@
 
 entrypoints Program ;
 
-PProg.       Program ::= [Def] ;
+PProg.           Program ::= [Def] ;
 separator nonempty Def "" ;
 
 FnDef.           Def ::= Type Ident "(" [Arg] ")" Block ;
@@ -38,7 +38,8 @@ TInt.            Type ::= "int" ;
 TDoub.           Type ::= "double" ;
 TBool.           Type ::= "boolean" ;
 TVoid.           Type ::= "void" ;
-internal Fun.   Type ::= Type "(" [Type] ")" ;
+
+internal Fun.    Type ::= Type "(" [Type] ")" ;
 separator Type "," ;
 
 -- Expessions ---------------------------------------------
