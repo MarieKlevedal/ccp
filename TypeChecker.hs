@@ -12,8 +12,8 @@ import qualified Data.Map as M
 ----------------------------------- **************  ----------------------------------
 
 type Env = (Sig,[Context])              -- functions and context stack
-type Sig = Map Id ([Type],Type)         -- function type signature
-type Context = Map Id Type              -- variables with their types
+type Sig = Map Ident ([Type],Type)         -- function type signature
+type Context = Map Ident Type              -- variables with their types
 
 
 --------------------------------- ****************** ---------------------------------
@@ -22,7 +22,7 @@ type Context = Map Id Type              -- variables with their types
 
 -- lookVar returns the type of the variable in the topmost (i.e. innermost) context of 
 -- the environment in which the variable exists
-lookVar :: Env -> Id -> Err Type
+lookVar :: Env -> Ident -> Err Type
 lookVar (_, [])   id = Bad $ "no variable with id " ++ printTree id ++ " in the environment"
 lookVar (s, c:cs) id = case M.lookup id c of
     Just t  -> Ok t
@@ -30,21 +30,21 @@ lookVar (s, c:cs) id = case M.lookup id c of
 
 -- lookFun returns a tuple with a list of the types of the argument list and the
 -- return type for the function with that id 
-lookFun :: Env -> Id -> Err ([Type],Type)
+lookFun :: Env -> Ident -> Err ([Type],Type)
 lookFun (s, _) id = case M.lookup id s of
     Just tup -> Ok tup
     Nothing  -> Bad $ "no function with id " ++ printTree id ++ " in the environment"
 
 -- extendVar adds a new variable and its type to the topmost (i.e. innermost) context 
 -- in the environment
-extendVar :: Env -> Id -> Type -> Err Env
+extendVar :: Env -> Ident -> Type -> Err Env
 extendVar (_, [])   id _ = Bad $ "there are no contexts without variable " ++  printTree id ++ " in the environment"
 extendVar (s, c:cs) id t = case M.lookup id c of
     Just _  -> Bad $ "variable " ++ printTree id ++ " already in context"
     Nothing -> Ok (s, (M.insert id t c):cs)
 
 -- extendFun adds a new funcion and its types to the envionment
-extendFun :: Env -> Id -> ([Type], Type) -> Err Env
+extendFun :: Env -> Ident -> ([Type], Type) -> Err Env
 extendFun env@(s, cs) id tup = case M.lookup id s of
     Just _  -> Bad $ "function with id " ++ printTree id ++ " already exists"
     Nothing -> Ok ((M.insert id tup s), cs)
@@ -64,19 +64,19 @@ emptyEnv = (M.empty, [])
 -- addFtoC adds the function type signature of each definition to the environment 
 addFtoC :: Env -> [Def] -> Err Env
 addFtoC env []                      = Ok env
-addFtoC env ((DFun t id args _):ds) = 
+addFtoC env ((FnDef t id args _):ds) = 
     case extendFun env id ((Prelude.map argtoT args), t) of
         Ok env' -> addFtoC env' ds
         Bad str -> Bad str
 
 -- argtoT takes an argument and returns its type
 argtoT :: Arg -> Type
-argtoT (ADecl t id) = t
+argtoT (DArg t id) = t
 
 -- addVtoC adds all argument varibles to the topmost/innermost context in env
 addVtoC :: Env -> [Arg] -> Err Env
 addVtoC env []                  = Ok env 
-addVtoC env ((ADecl t id):args) = case extendVar env id t of
+addVtoC env ((DArg t id):args) = case extendVar env id t of
     Ok env' -> addVtoC env' args
     Bad str -> Bad str
 
@@ -87,11 +87,11 @@ addVtoC env ((ADecl t id):args) = case extendVar env id t of
 -- typecheck first adds all the definitions of the program to the environment and then
 -- makes sure all definitions are type correct
 typecheck :: Program -> Err ()
-typecheck (PDefs ds) = do 
-    let builtIn = [(DFun Type_void   (Id "printInt")    [ADecl Type_int (Id "x")]    []), 
-                   (DFun Type_void   (Id "printDouble") [ADecl Type_double (Id "x")] []),
-                   (DFun Type_int    (Id "readInt")     []                           []),
-                   (DFun Type_double (Id "readDouble")  []                           [])]
+typecheck (PProg ds) = do 
+    let builtIn = [(FnDef TVoid   (Ident "printInt")    [DArg TInt (Ident "x")]    (DBlock [])), 
+                   (FnDef TVoid   (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
+                   (FnDef TInt    (Ident "readInt")     []                           (DBlock [])),
+                   (FnDef TDoub (Ident "readDouble")  []                           (DBlock []))]
     case addFtoC emptyEnv (ds ++ builtIn) of
         Ok env' -> callCheckDef env' ds 
         Bad str -> Bad str
@@ -106,7 +106,7 @@ callCheckDef env (d:ds) = do
 -- checkDef adds a new context to the env, adds all the func args to the context and 
 -- checks that all stms in its body are type correct
 checkDef :: Env -> Def -> Err ()
-checkDef env (DFun t id args stms) = do
+checkDef env (FnDef t id args (DBlock stms)) = do
     case addVtoC (newBlock env) args of
         Ok env' -> checkStms env' t stms
         Bad str -> Bad str
@@ -123,34 +123,56 @@ checkStms env t (s:ss) = case checkStm env t s of
 -- checkStm checks that stm is type correct
 checkStm :: Env -> Type -> Stm -> Err Env
 checkStm env rt stm = case stm of
+    SEmpty                -> Ok env
+    SBlock (DBlock stms)  -> do
+        checkStms (newBlock env) rt stms
+        Ok env
+    SDecl t items         -> checkDecl env t items
+    SAss id exp           -> do
+        t <- lookVar env id
+        checkExp env t exp
+        Ok env
+    SIncr id              -> do
+        t <- lookVar env id
+        case t of
+            TInt -> Ok env
+            _    -> Bad "can only increment Int"
+    SDecr id              -> do
+        t <- lookVar env id
+        case t of
+            TInt -> Ok env
+            _    -> Bad "can only decrement Int"
+    SRet exp              -> do
+        checkExp env rt exp
+        Ok env
+    SVRet                 -> case rt of
+        TVoid -> Ok env
+        _     -> Bad "return type is not void"
+    SIf exp stm           -> do
+        checkExp env TBool exp
+        checkStm env rt stm
+    SIfElse exp stm1 stm2 -> do
+        checkExp env TBool exp
+        checkStm env rt stm1
+        checkStm env rt stm2
+    SWhile exp stm -> do
+        checkExp env TBool exp
+        checkStm env rt stm
     SExp exp -> do
         inferExp env exp
         Ok env
-    SDecls t ids -> 
-        giveIdType env t ids
-    SInit t id exp -> do
-        checkExp env t exp
-        giveIdType env t [id]
-    SReturn exp -> do
-        checkExp env rt exp
-        Ok env
-    SWhile exp stm2 -> do
-        checkExp env Type_bool exp
-        checkStm env rt stm2
-    SBlock stms -> do
-        checkStms (newBlock env) rt stms
-        Ok env
-    SIfElse exp stm1 stm2 -> do
-        checkExp env Type_bool exp
-        checkStm env rt stm1
-        checkStm env rt stm2
 
--- giveIdType gives all the ids in the list the given type
-giveIdType :: Env -> Type -> [Id] -> Err Env
-giveIdType env _ []       = Ok env
-giveIdType env t (id:ids) = case extendVar env id t of
-    Ok env' -> giveIdType env' t ids
-    Bad str -> Bad str
+checkDecl :: Env -> Type -> [Item] -> Err Env
+checkDecl env t []           = Ok env
+checkDecl env t (item:items) = case item of
+    (IDecl id) -> case extendVar env id t of
+        Ok env' -> checkDecl env' t items
+        Bad str -> Bad str
+    (IInit id exp) -> do
+        checkExp env t exp
+        case extendVar env id t of
+            Ok env' -> checkDecl env' t items
+            Bad str -> Bad str
 
 ----------------------- checkExp and its auxilary functions -----------------------
 
@@ -165,11 +187,12 @@ checkExp env t exp = do
 -- inferExp returns the type of exp
 inferExp :: Env -> Exp -> Err Type  
 inferExp env exp = case exp of
-    ETrue           -> Ok Type_bool
-    EFalse          -> Ok Type_bool
-    EInt n          -> Ok Type_int
-    EDouble n       -> Ok Type_double
-    EId id          -> lookVar env id
+    EVar id        -> lookVar env id
+    ELit LTrue     -> Ok TBool
+    ELit LFalse    -> Ok TBool
+    ELit (LInt n)  -> Ok TInt
+    ELit (LDoub n) -> Ok TDoub
+
     
     -- Check that the function call has the correct types and return the return
     -- type of the function
@@ -179,37 +202,32 @@ inferExp env exp = case exp of
                 then Ok retT
                 else Bad $ "non-matching argument lists for function " ++ printTree id
         Bad _            -> Bad $ "function " ++ printTree id ++ " not defined"
-
-    EPostIncr e     -> checkIntDouble env e
-    EPostDecr e     -> checkIntDouble env e
-    EPreIncr e      -> checkIntDouble env e
-    EPreDecr e      -> checkIntDouble env e
-
-    ETimes e1 e2    -> checkArithmType env e1 e2 
-    EDiv e1 e2      -> checkArithmType env e1 e2 
-    EPlus e1 e2     -> checkArithmType env e1 e2 
-    EMinus e1 e2    -> checkArithmType env e1 e2 
-
-    ELt e1 e2       -> checkCompType env e1 e2 
-    EGt e1 e2       -> checkCompType env e1 e2 
-    ELtEq e1 e2     -> checkCompType env e1 e2 
-    EGtEq e1 e2     -> checkCompType env e1 e2 
-    EEq e1 e2       -> checkCompType env e1 e2 
-    ENEq e1 e2      -> checkCompType env e1 e2 
-
+    Neg e          -> do
+        t <- inferExp env e
+        case elem t [TInt, TDoub] of
+            True -> Ok t
+            _    -> Bad $ "incorrect type of expression " ++ printTree e
+    Not e          -> do
+        checkExp env TBool e
+        Ok TBool
+    EMul e1 Mod e2 -> checkMatchingType env [TInt] e1 e2
+    EMul e1 _ e2   -> checkMatchingType env [TInt, TDoub] e1 e2
+    EAdd e1 _ e2   -> checkMatchingType env [TInt, TDoub] e1 e2
+    ERel e1 _ e2   -> do
+        t <- inferExp env e1
+        case elem t [TInt, TDoub, TBool] of
+            True -> do
+                checkExp env t e2
+                Ok TBool
+            _    -> Bad $ "incorrect type of expression " ++ printTree e1 
     EAnd e1 e2      -> do
-        checkExp env Type_bool e1
-        checkExp env Type_bool e2
-        Ok Type_bool 
+        checkExp env TBool e1
+        checkExp env TBool e2
+        Ok TBool 
     EOr e1 e2       -> do
-        checkExp env Type_bool e1
-        checkExp env Type_bool e2
-        Ok Type_bool 
-
-    EAss (EId id) e2 -> do
-        t <- lookVar env id
-        checkExp env t e2
-        Ok t
+        checkExp env TBool e1
+        checkExp env TBool e2
+        Ok TBool
 
 -- checkArgTypes calls inferExp on all the expressions and returns a list of the 
 -- types to the expressions for which it succeded
@@ -218,35 +236,26 @@ checkArgTypes _   []     _  = []
 checkArgTypes env (e:es) ts = case inferExp env e of
     Ok t  -> (checkArgTypes env es ts) ++ [t]
     Bad _ -> checkArgTypes env es ts
-
--- checkIntDouble checks that an exp is of type int or double
-checkIntDouble :: Env -> Exp -> Err Type
-checkIntDouble env e = do
-    t <- inferExp env e
-    if elem t [Type_int, Type_double] 
-        then Ok t
-        else Bad $ "type of expression " ++ printTree e 
     
 -- checkArithmType checks that the two expressions have the same type and that the
 -- type is one of int and double
-checkArithmType :: Env -> Exp -> Exp -> Err Type
-checkArithmType env e1 e2 = do
+checkMatchingType :: Env -> [Type] -> Exp -> Exp -> Err Type
+checkMatchingType env ts e1 e2 = do
     t <- inferExp env e1
-    if elem t [Type_int, Type_double]
-        then do
+    case elem t ts of
+        True -> do
             checkExp env t e2
             Ok t
-        else
-            Bad $ "type of expression " ++ printTree e1 
+        _    -> Bad $ "incorrect type of expression " ++ printTree e1 
 
 -- checkCompType checks that the two expressions have the same type (one of int, 
--- double and bool) and returns Type_bool at success
+-- double and bool) and returns TBool at success
 checkCompType :: Env -> Exp -> Exp -> Err Type
 checkCompType env e1 e2 = do
     t <- inferExp env e1
-    if elem t [Type_int, Type_double, Type_bool]
+    if elem t [TInt, TDoub, TBool]
         then do
             checkExp env t e2
-            Ok Type_bool
+            Ok TBool
         else
             Bad $ "type of expression " ++ printTree e1
