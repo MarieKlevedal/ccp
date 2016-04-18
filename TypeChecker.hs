@@ -61,12 +61,12 @@ emptyEnv = (M.empty, [])
 ----------------------------------- ADD THINGS -----------------------------------
 ----------------------------------- ********** -----------------------------------
 
--- addFtoC adds the function type signature of each definition to the environment 
-addFtoC :: Env -> [Def] -> Err Env
-addFtoC env []                      = Ok env
-addFtoC env ((FnDef t id args _):ds) = 
+-- addFtoEnv adds the function type signature of each definition to the environment 
+addFtoEnv :: Env -> [Def] -> Err Env
+addFtoEnv env []                      = Ok env
+addFtoEnv env ((FnDef t id args _):ds) = 
     case extendFun env id ((Prelude.map argtoT args), t) of
-        Ok env' -> addFtoC env' ds
+        Ok env' -> addFtoEnv env' ds
         Bad str -> Bad str
 
 -- argtoT takes an argument and returns its type
@@ -92,7 +92,7 @@ typecheck (PProg ds) = do
                    (FnDef TVoid   (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
                    (FnDef TInt    (Ident "readInt")     []                           (DBlock [])),
                    (FnDef TDoub (Ident "readDouble")  []                           (DBlock []))]
-    case addFtoC emptyEnv (ds ++ builtIn) of
+    case addFtoEnv emptyEnv (ds ++ builtIn) of
         Ok env' -> callCheckDef env' ds 
         Bad str -> Bad str
 
