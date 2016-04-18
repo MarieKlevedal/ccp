@@ -92,10 +92,11 @@ typecheck (PProg ds) = case addFtoEnv emptyEnv (ds ++ builtIn) of
     Bad str -> Bad str
 
 builtIn :: [Def]
-builtIn = [(FnDef TVoid   (Ident "printInt")    [DArg TInt (Ident "x")]  (DBlock [])), 
-           (FnDef TVoid   (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
-           (FnDef TInt    (Ident "readInt")     []                       (DBlock [])),
-           (FnDef TDoub   (Ident "readDouble")  []                       (DBlock []))]
+builtIn = [(FnDef TVoid (Ident "printInt")    [DArg TInt (Ident "x")]  (DBlock [])), 
+           (FnDef TVoid (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
+           (FnDef TInt  (Ident "readInt")     []                       (DBlock [])),
+           (FnDef TDoub (Ident "readDouble")  []                       (DBlock [])),
+           (FnDef TVoid (Ident "printString") [] (DBlock []))]
 
 -- callCheckDef calls checkDef for all defs in the program
 callCheckDef :: Env -> [Def] -> Err ()
@@ -198,11 +199,15 @@ inferExp env exp = case exp of
     -- Check that the function call has the correct types and return the return
     -- type of the function
     EApp id exps    -> case lookFun env id of
-        Ok (argTs, retT) -> 
-            if length exps == length argTs && (checkArgTypes env exps []) == argTs 
-                then Ok retT
-                else Bad $ "non-matching argument lists for function " ++ printTree id
+        Ok (argTs, retT) -> case (\(Ident str) -> str) id of
+            "printString" -> Ok retT
+            _             -> if length exps == length argTs && 
+                                (checkArgTypes env exps []) == argTs 
+                                then Ok retT
+                                else Bad $ "non-matching argument lists for function " 
+                                     ++ printTree id
         Bad _            -> Bad $ "function " ++ printTree id ++ " not defined"
+    EString str    -> Bad "no string expressions allowed"
     Neg e          -> do
         t <- inferExp env e
         case elem t [TInt, TDoub] of
