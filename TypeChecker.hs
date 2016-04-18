@@ -11,9 +11,9 @@ import qualified Data.Map as M
 ----------------------------------- NEW DATA TYPES  ----------------------------------
 ----------------------------------- **************  ----------------------------------
 
-type Env = (Sig,[Context])              -- functions and context stack
-type Sig = Map Ident ([Type],Type)         -- function type signature
-type Context = Map Ident Type              -- variables with their types
+type Env = (Sig,[Cxt])                  -- functions and context stack
+type Sig = Map Ident ([Type],Type)      -- function type signature
+type Cxt = Map Ident Type               -- variables with their types
 
 
 --------------------------------- ****************** ---------------------------------
