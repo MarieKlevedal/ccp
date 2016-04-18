@@ -87,14 +87,15 @@ addVtoC env ((DArg t id):args) = case extendVar env id t of
 -- typecheck first adds all the definitions of the program to the environment and then
 -- makes sure all definitions are type correct
 typecheck :: Program -> Err ()
-typecheck (PProg ds) = do 
-    let builtIn = [(FnDef TVoid   (Ident "printInt")    [DArg TInt (Ident "x")]    (DBlock [])), 
-                   (FnDef TVoid   (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
-                   (FnDef TInt    (Ident "readInt")     []                           (DBlock [])),
-                   (FnDef TDoub (Ident "readDouble")  []                           (DBlock []))]
-    case addFtoEnv emptyEnv (ds ++ builtIn) of
-        Ok env' -> callCheckDef env' ds 
-        Bad str -> Bad str
+typecheck (PProg ds) = case addFtoEnv emptyEnv (ds ++ builtIn) of
+    Ok env' -> callCheckDef env' ds 
+    Bad str -> Bad str
+
+builtIn :: [Def]
+builtIn = [(FnDef TVoid   (Ident "printInt")    [DArg TInt (Ident "x")]  (DBlock [])), 
+           (FnDef TVoid   (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
+           (FnDef TInt    (Ident "readInt")     []                       (DBlock [])),
+           (FnDef TDoub   (Ident "readDouble")  []                       (DBlock []))]
 
 -- callCheckDef calls checkDef for all defs in the program
 callCheckDef :: Env -> [Def] -> Err ()
