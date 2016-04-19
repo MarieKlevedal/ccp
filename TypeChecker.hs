@@ -181,87 +181,77 @@ checkDecl env t (item:items) = case item of
 -- checkExp checks that the the expression has the given type
 checkExp :: Env -> Type -> Exp -> Err ()
 checkExp env t exp = do
-    t2 <- inferExp env exp
+    (EType t2 _) <- inferExp env exp
     if (t2 == t) 
         then Ok ()
         else Bad $ "type of " ++ printTree exp
 
 -- inferExp returns the type of exp
-inferExp :: Env -> Exp -> Err Type  
+inferExp :: Env -> Exp -> Err Exp  
 inferExp env exp = case exp of
-    EVar id        -> lookVar env id
-    ELit LTrue     -> Ok TBool
-    ELit LFalse    -> Ok TBool
-    ELit (LInt n)  -> Ok TInt
-    ELit (LDoub n) -> Ok TDoub
-
+    EVar id        -> case lookVar env id of
+        Ok t    -> Ok $ EType t exp
+        Bad s   -> Bad s
+    ELit LTrue     -> Ok $ EType TBool exp
+    ELit LFalse    -> Ok $ EType TBool exp
+    ELit (LInt n)  -> Ok $ EType TInt exp
+    ELit (LDoub n) -> Ok $ EType TDoub exp
     
     -- Check that the function call has the correct types and return the return
     -- type of the function
     EApp id exps    -> case lookFun env id of
         Ok (argTs, retT) -> case (\(Ident str) -> str) id of
-            "printString" -> Ok retT
+            "printString" -> Ok $ EType retT exp
             _             -> if length exps == length argTs && 
                                 (checkArgTypes env exps []) == argTs 
-                                then Ok retT
+                                then Ok $ EType retT exp
                                 else Bad $ "non-matching argument lists for function " 
                                      ++ printTree id
         Bad _            -> Bad $ "function " ++ printTree id ++ " not defined"
     EString str    -> Bad "no string expressions allowed"
     ENeg e          -> do
-        t <- inferExp env e
+        (EType t _) <- inferExp env e
         case elem t [TInt, TDoub] of
-            True -> Ok t
+            True -> Ok $ EType t exp
             _    -> Bad $ "incorrect type of expression " ++ printTree e
     ENot e          -> do
         checkExp env TBool e
-        Ok TBool
-    EMul e1 Mod e2 -> checkMatchingType env [TInt] e1 e2
-    EMul e1 _ e2   -> checkMatchingType env [TInt, TDoub] e1 e2
-    EAdd e1 _ e2   -> checkMatchingType env [TInt, TDoub] e1 e2
+        Ok $ EType TBool exp
+    EMul e1 Mod e2 -> checkMatchingType env exp [TInt] e1 e2
+    EMul e1 _ e2   -> checkMatchingType env exp [TInt, TDoub] e1 e2
+    EAdd e1 _ e2   -> checkMatchingType env exp [TInt, TDoub] e1 e2
     ERel e1 _ e2   -> do
-        t <- inferExp env e1
+        (EType t _) <- inferExp env e1
         case elem t [TInt, TDoub, TBool] of
             True -> do
                 checkExp env t e2
-                Ok TBool
+                Ok $ EType TBool exp
             _    -> Bad $ "incorrect type of expression " ++ printTree e1 
     EAnd e1 e2      -> do
         checkExp env TBool e1
         checkExp env TBool e2
-        Ok TBool 
+        Ok $ EType TBool exp
     EOr e1 e2       -> do
         checkExp env TBool e1
         checkExp env TBool e2
-        Ok TBool
+        Ok $ EType TBool exp
 
 -- checkArgTypes calls inferExp on all the expressions and returns a list of the 
 -- types to the expressions for which it succeded
 checkArgTypes :: Env -> [Exp] -> [Type] -> [Type]
 checkArgTypes _   []     _  = []
 checkArgTypes env (e:es) ts = case inferExp env e of
-    Ok t  -> (checkArgTypes env es ts) ++ [t]
-    Bad _ -> checkArgTypes env es ts
+    Ok (EType t _)  -> (checkArgTypes env es ts) ++ [t]
+    Bad _           -> checkArgTypes env es ts
     
 -- checkArithmType checks that the two expressions have the same type and that the
 -- type is one of int and double
-checkMatchingType :: Env -> [Type] -> Exp -> Exp -> Err Type
-checkMatchingType env ts e1 e2 = do
-    t <- inferExp env e1
+checkMatchingType :: Env -> Exp -> [Type] -> Exp -> Exp -> Err Exp
+checkMatchingType env exp ts e1 e2 = do
+    (EType t _) <- inferExp env e1
     case elem t ts of
         True -> do
             checkExp env t e2
-            Ok t
+            Ok $ EType t exp
         _    -> Bad $ "incorrect type of expression " ++ printTree e1 
 
--- checkCompType checks that the two expressions have the same type (one of int, 
--- double and bool) and returns TBool at success
-checkCompType :: Env -> Exp -> Exp -> Err Type
-checkCompType env e1 e2 = do
-    t <- inferExp env e1
-    if elem t [TInt, TDoub, TBool]
-        then do
-            checkExp env t e2
-            Ok TBool
-        else
-            Bad $ "type of expression " ++ printTree e1
