@@ -208,12 +208,12 @@ inferExp env exp = case exp of
                                      ++ printTree id
         Bad _            -> Bad $ "function " ++ printTree id ++ " not defined"
     EString str    -> Bad "no string expressions allowed"
-    Neg e          -> do
+    ENeg e          -> do
         t <- inferExp env e
         case elem t [TInt, TDoub] of
             True -> Ok t
             _    -> Bad $ "incorrect type of expression " ++ printTree e
-    Not e          -> do
+    ENot e          -> do
         checkExp env TBool e
         Ok TBool
     EMul e1 Mod e2 -> checkMatchingType env [TInt] e1 e2
