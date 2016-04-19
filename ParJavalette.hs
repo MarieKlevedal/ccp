@@ -654,7 +654,7 @@ happyReduction_44 happy_x_2
 	happy_x_1
 	 =  case happyOut20 happy_x_2 of { happy_var_2 -> 
 	happyIn21
-		 (Neg happy_var_2
+		 (ENeg happy_var_2
 	)}
 
 happyReduce_45 = happySpecReduce_2  17# happyReduction_45
@@ -662,7 +662,7 @@ happyReduction_45 happy_x_2
 	happy_x_1
 	 =  case happyOut20 happy_x_2 of { happy_var_2 -> 
 	happyIn21
-		 (Not happy_var_2
+		 (ENot happy_var_2
 	)}
 
 happyReduce_46 = happySpecReduce_1  17# happyReduction_46

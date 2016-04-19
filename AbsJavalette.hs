@@ -57,8 +57,8 @@ data Exp =
  | ELit Lit
  | EApp Ident [Exp]
  | EString String
- | Neg Exp
- | Not Exp
+ | ENeg Exp
+ | ENot Exp
  | EMul Exp MulOp Exp
  | EAdd Exp AddOp Exp
  | ERel Exp RelOp Exp

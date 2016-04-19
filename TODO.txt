@@ -1,1 +1,5 @@
 Ändra namn Neg, Not -> +E
+
+Fixa så att typecheckern returnerar ett type-annotated tree.
+
+Kolla att return funkar som det ska (se s. 7 och bad008.jl), kolla if.
