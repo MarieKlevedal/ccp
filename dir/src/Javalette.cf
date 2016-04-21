@@ -56,7 +56,7 @@ ERel.            Exp2    ::= Exp2 RelOp Exp3 ;
 EAnd.            Exp1    ::= Exp2 "&&" Exp1 ;
 EOr.             Exp     ::= Exp1 "||" Exp ;
 coercions Exp 6 ;
-internal EType.  Exp     ::= Type Exp ;  --correct?
+internal EType.  Exp     ::= Type Exp ;
 separator Exp "," ;
 
 ------------------------- Literals ----------------------------

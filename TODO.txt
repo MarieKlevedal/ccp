@@ -33,8 +33,8 @@ Frågor
     ¤ Vilka filer ska finnas i lib-mappen i denna labben?
       A: vi kan ha en tom mapp om vi vill, annars utesluta den
 
-    ¤ Punkt 5: Var avser "here"? lib- eller doc-mappen?
-      A: lägg den i root
+    ¤ Punkt 5: Var avser "here"?
+      A: lägg den i root. Lägg till den när vi kör tar-kommandot
 
 ¤ Vi ska inte submitta testfilerna va? Och inte anropa dem från jlc?
   A: Nej
