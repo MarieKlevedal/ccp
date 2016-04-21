@@ -2,13 +2,6 @@ TODO
 ----
 ¤ Grammarn har tre unused rules. Ta bort dem?
 
-¤ Lägg till internal String-type/exp.
-
-¤ Kolla att return funkar som det ska (se s. 7 och bad008.jl), kolla if.
-  (Kolla detta efter tc?)
-
-¤ Kolla att det finns en mainmetod och att den har rätt typ.
-
 ¤ Skriv kommentarer till funktionerna i typecheckern
 
 ¤ Skriv doc-fil
