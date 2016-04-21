@@ -3,6 +3,7 @@ TODO
 ¤ Grammarn har tre unused rules. Ta bort dem?
 
 ¤ Kolla att return funkar som det ska (se s. 7 och bad008.jl), kolla if.
+  (Kolla detta efter tc?)
 
 ¤ Kolla att det finns en mainmetod och att den har rätt typ.
 
@@ -18,14 +19,28 @@ Frågor
 ------
 ¤ Hur bör vi hantera printString? Dess argument har ingen typ, så ska vi 
   modellera det som att den inte har några parametrar i typecheckern?
+  A: Annars kan vi lägga in strängar internt (exp, type).
   
-¤ Hur ska alla submissionfiler se ut på submission A?
+¤ Submission A
     ¤ Vilka filer avses i de två andra punkterna under punkt 3?
+      A: alla bnfc-genererade
+      Vi kan generera makefien från bnfc och sen moda den. Kan ha en dependency 
+      som kollar när cf-filen ändrats och då återgenererar filerna.
+      
     ¤ Vad gör gmake? Är det användaren eller jlc som ska köra det kommandot?
+      A: version av make
+    
     ¤ Vilka filer ska finnas i lib-mappen i denna labben?
-    ¤ Är plain ascii en .txt-fil?
+      A: vi kan ha en tom mapp om vi vill, annars utesluta den
+
     ¤ Punkt 5: Var avser "here"? lib- eller doc-mappen?
+      A: lägg den i root
 
 ¤ Vi ska inte submitta testfilerna va? Och inte anropa dem från jlc?
+  A: Nej
 
 ¤ Fråga om test på s. 20 i labb-pm.
+  A: det är Main som ska skiva ut det
+  
+  
+Make ska bygga kompilatorn. Ska inte köra saker, bara bygga. Skall bygga kompilatorn.
