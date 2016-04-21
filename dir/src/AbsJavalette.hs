@@ -49,6 +49,7 @@ data Type =
  | TDoub
  | TBool
  | TVoid
+ | TStr
  | TFun Type [Type]
   deriving (Eq,Ord,Show,Read)
 
@@ -56,7 +57,6 @@ data Exp =
    EVar Ident
  | ELit Lit
  | EApp Ident [Exp]
- | EString String
  | ENeg Exp
  | ENot Exp
  | EMul Exp MulOp Exp
@@ -72,6 +72,7 @@ data Lit =
  | LDoub Double
  | LTrue
  | LFalse
+ | LStr String
   deriving (Eq,Ord,Show,Read)
 
 data AddOp =

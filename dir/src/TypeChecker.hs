@@ -88,11 +88,11 @@ typecheck (PProg ds) = do
     Ok $ PProg ds'
 
 builtIn :: [Def]
-builtIn = [(FnDef TVoid (Ident "printInt")    [DArg TInt (Ident "x")]  (DBlock [])), 
+builtIn = [(FnDef TVoid (Ident "printInt")    [DArg TInt (Ident "n")]  (DBlock [])), 
            (FnDef TVoid (Ident "printDouble") [DArg TDoub (Ident "x")] (DBlock [])),
            (FnDef TInt  (Ident "readInt")     []                       (DBlock [])),
            (FnDef TDoub (Ident "readDouble")  []                       (DBlock [])),
-           (FnDef TVoid (Ident "printString") [] (DBlock []))]
+           (FnDef TVoid (Ident "printString") [DArg TStr (Ident "s")]  (DBlock []))]
 
 -- checkDefs calls checkDef for all defs in the program
 checkDefs :: Env -> [Def] -> Err [Def]
@@ -213,20 +213,16 @@ inferExp env exp = case exp of
         Ok $ EType t exp
     ELit LTrue     -> Ok $ EType TBool exp
     ELit LFalse    -> Ok $ EType TBool exp
-    ELit (LInt n)  -> Ok $ EType TInt exp
-    ELit (LDoub n) -> Ok $ EType TDoub exp
+    ELit (LInt _)  -> Ok $ EType TInt exp
+    ELit (LDoub _) -> Ok $ EType TDoub exp
+    ELit (LStr _)  -> Ok $ EType TStr exp
     
     -- Check that the function call has the correct types and return the return
     -- type of the function
     EApp id exps    -> do
         (TFun retT argTs) <- lookFuncSig env id
-        case (\(Ident str) -> str) id of
-            "printString" -> Ok $ EType retT exp
-            _             -> do
-                tes <- checkArgTypes env argTs exps
-                Ok $ EType retT (EApp id tes)
-    
-    EString str    -> Bad "no string expressions allowed"
+        tes <- checkArgTypes env argTs exps
+        Ok $ EType retT (EApp id tes)
     
     ENeg e          -> do
         (EType t _) <- inferExp env e

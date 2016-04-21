@@ -62,6 +62,7 @@ transType x = case x of
   TDoub  -> failure x
   TBool  -> failure x
   TVoid  -> failure x
+  TStr  -> failure x
   TFun type' types  -> failure x
 
 
@@ -70,7 +71,6 @@ transExp x = case x of
   EVar id  -> failure x
   ELit lit  -> failure x
   EApp id exps  -> failure x
-  EString str  -> failure x
   ENeg exp  -> failure x
   ENot exp  -> failure x
   EMul exp1 mulop2 exp3  -> failure x
@@ -87,6 +87,7 @@ transLit x = case x of
   LDoub d  -> failure x
   LTrue  -> failure x
   LFalse  -> failure x
+  LStr str  -> failure x
 
 
 transAddOp :: AddOp -> Result

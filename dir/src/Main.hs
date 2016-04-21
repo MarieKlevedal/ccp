@@ -12,16 +12,16 @@ check :: String -> IO ()
 check s = do
   case pProgram (myLexer s) of
     Bad err  -> do
-      putStrLn "SYNTAX ERROR"
+      putStr "SYNTAX ERROR: "
       putStrLn err
       exitFailure
     Ok  tree -> do
       case typecheck tree of
         Bad err -> do
-          putStrLn "TYPE ERROR"
+          putStr "TYPE ERROR: "
           putStrLn err
           exitFailure
-        Ok _ -> putStrLn "The program is well typed"
+        Ok _ -> putStrLn "------------------------The program is well typed"
 
 main :: IO ()
 main = do

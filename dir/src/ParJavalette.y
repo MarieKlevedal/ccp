@@ -35,32 +35,33 @@ import ErrM
   '==' { PT _ (TS _ 18) }
   '>' { PT _ (TS _ 19) }
   '>=' { PT _ (TS _ 20) }
-  'boolean' { PT _ (TS _ 21) }
-  'double' { PT _ (TS _ 22) }
-  'else' { PT _ (TS _ 23) }
-  'false' { PT _ (TS _ 24) }
-  'if' { PT _ (TS _ 25) }
-  'int' { PT _ (TS _ 26) }
-  'return' { PT _ (TS _ 27) }
-  'true' { PT _ (TS _ 28) }
-  'void' { PT _ (TS _ 29) }
-  'while' { PT _ (TS _ 30) }
-  '{' { PT _ (TS _ 31) }
-  '||' { PT _ (TS _ 32) }
-  '}' { PT _ (TS _ 33) }
+  'String' { PT _ (TS _ 21) }
+  'boolean' { PT _ (TS _ 22) }
+  'double' { PT _ (TS _ 23) }
+  'else' { PT _ (TS _ 24) }
+  'false' { PT _ (TS _ 25) }
+  'if' { PT _ (TS _ 26) }
+  'int' { PT _ (TS _ 27) }
+  'return' { PT _ (TS _ 28) }
+  'true' { PT _ (TS _ 29) }
+  'void' { PT _ (TS _ 30) }
+  'while' { PT _ (TS _ 31) }
+  '{' { PT _ (TS _ 32) }
+  '||' { PT _ (TS _ 33) }
+  '}' { PT _ (TS _ 34) }
 
 L_ident  { PT _ (TV $$) }
-L_quoted { PT _ (TL $$) }
 L_integ  { PT _ (TI $$) }
 L_doubl  { PT _ (TD $$) }
+L_quoted { PT _ (TL $$) }
 
 
 %%
 
 Ident   :: { Ident }   : L_ident  { Ident $1 }
-String  :: { String }  : L_quoted {  $1 }
 Integer :: { Integer } : L_integ  { (read ( $1)) :: Integer }
 Double  :: { Double }  : L_doubl  { (read ( $1)) :: Double }
+String  :: { String }  : L_quoted {  $1 }
 
 Program :: { Program }
 Program : ListDef { PProg $1 } 
@@ -136,7 +137,6 @@ Exp6 :: { Exp }
 Exp6 : Ident { EVar $1 } 
   | Lit { ELit $1 }
   | Ident '(' ListExp ')' { EApp $1 $3 }
-  | String { EString $1 }
   | '(' Exp ')' { $2 }
 
 

@@ -39,6 +39,7 @@ TDoub.           Type    ::= "double" ;
 TBool.           Type    ::= "boolean" ;
 TVoid.           Type    ::= "void" ;
 
+internal TStr.   Type    ::= "String" ; 
 internal TFun.   Type    ::= Type "(" [Type] ")" ;
 separator Type "," ;
 
@@ -47,7 +48,6 @@ separator Type "," ;
 EVar.            Exp6    ::= Ident ;
 ELit.            Exp6    ::= Lit ;
 EApp.            Exp6    ::= Ident "(" [Exp] ")" ;
-EString.         Exp6    ::= String ;
 ENeg.            Exp5    ::= "-" Exp6 ;
 ENot.            Exp5    ::= "!" Exp6 ;
 EMul.            Exp4    ::= Exp4 MulOp Exp5 ;
@@ -65,6 +65,8 @@ LInt.            Lit     ::= Integer ;
 LDoub.           Lit     ::= Double ;
 LTrue.           Lit     ::= "true" ;
 LFalse.          Lit     ::= "false" ;
+
+internal LStr.   Lit     ::= String ;
 
 ------------------------- Operators ---------------------------
 

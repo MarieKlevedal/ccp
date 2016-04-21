@@ -144,6 +144,7 @@ instance Print Type where
    TDoub  -> prPrec i 0 (concatD [doc (showString "double")])
    TBool  -> prPrec i 0 (concatD [doc (showString "boolean")])
    TVoid  -> prPrec i 0 (concatD [doc (showString "void")])
+   TStr  -> prPrec i 0 (concatD [doc (showString "String")])
    TFun type' types -> prPrec i 0 (concatD [prt 0 type' , doc (showString "(") , prt 0 types , doc (showString ")")])
 
   prtList es = case es of
@@ -156,7 +157,6 @@ instance Print Exp where
    EVar id -> prPrec i 6 (concatD [prt 0 id])
    ELit lit -> prPrec i 6 (concatD [prt 0 lit])
    EApp id exps -> prPrec i 6 (concatD [prt 0 id , doc (showString "(") , prt 0 exps , doc (showString ")")])
-   EString str -> prPrec i 6 (concatD [prt 0 str])
    ENeg exp -> prPrec i 5 (concatD [doc (showString "-") , prt 6 exp])
    ENot exp -> prPrec i 5 (concatD [doc (showString "!") , prt 6 exp])
    EMul exp0 mulop exp -> prPrec i 4 (concatD [prt 4 exp0 , prt 0 mulop , prt 5 exp])
@@ -177,6 +177,7 @@ instance Print Lit where
    LDoub d -> prPrec i 0 (concatD [prt 0 d])
    LTrue  -> prPrec i 0 (concatD [doc (showString "true")])
    LFalse  -> prPrec i 0 (concatD [doc (showString "false")])
+   LStr str -> prPrec i 0 (concatD [prt 0 str])
 
 
 instance Print AddOp where
