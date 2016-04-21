@@ -1,11 +1,31 @@
-Kolla att return funkar som det ska (se s. 7 och bad008.jl), kolla if.
+TODO
+----
+¤ Grammarn har tre unused rules. Ta bort dem?
 
-Skriv trevliga kommentarer till funktionerna
+¤ Kolla att return funkar som det ska (se s. 7 och bad008.jl), kolla if.
+
+¤ Kolla att det finns en mainmetod och att den har rätt typ.
+
+¤ Skriv kommentarer till funktionerna i typecheckern
+
+¤ Skriv doc-fil
+
+¤ Fixa submission-formatet
+
 
 
 Frågor
 ------
-¤ Skall vi kolla att det finns en mainmetod i labb A? I.s.f. i TC?
-¤ Skall vi kolla att det finns returnstatements där det bör i labb A?
-  Annars borde väl bad008 vara ok?
+¤ Hur bör vi hantera printString? Dess argument har ingen typ, så ska vi 
+  modellera det som att den inte har några parametrar i typecheckern?
+  
 ¤ Hur ska alla submissionfiler se ut på submission A?
+    ¤ Vilka filer avses i de två andra punkterna under punkt 3?
+    ¤ Vad gör gmake? Är det användaren eller jlc som ska köra det kommandot?
+    ¤ Vilka filer ska finnas i lib-mappen i denna labben?
+    ¤ Är plain ascii en .txt-fil?
+    ¤ Punkt 5: Var avser "here"? lib- eller doc-mappen?
+
+¤ Vi ska inte submitta testfilerna va? Och inte anropa dem från jlc?
+
+¤ Fråga om test på s. 20 i labb-pm.
