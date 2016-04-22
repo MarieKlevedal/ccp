@@ -65,8 +65,7 @@ LInt.            Lit     ::= Integer ;
 LDoub.           Lit     ::= Double ;
 LTrue.           Lit     ::= "true" ;
 LFalse.          Lit     ::= "false" ;
-
-internal LStr.   Lit     ::= String ;
+LStr.            Lit     ::= String ;
 
 ------------------------- Operators ---------------------------
 

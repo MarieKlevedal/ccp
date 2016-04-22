@@ -1,8 +1,9 @@
 TODO
 ----
+
 ¤ Grammarn har tre unused rules. Ta bort dem?
 
-¤ Skriv kommentarer till funktionerna i typecheckern
+¤ Skriv kommentarer till funktionerna i Main, TC och RC
 
 ¤ Skriv doc-fil
 

@@ -23,7 +23,7 @@ type Cxt = Map Ident Type                   -- variables with their types
 -- lookVar returns the type of the variable in the topmost (i.e. innermost) context of 
 -- the environment in which the variable exists
 lookVar :: Env -> Ident -> Err Type
-lookVar (_, [])   id = Bad $ "no variable with id " ++ printTree id ++ " in the environment"
+lookVar (_, [])   id = Bad $ "No variable with id " ++ printTree id ++ " in the environment"
 lookVar (f, c:cs) id = case M.lookup id c of
     Just t  -> Ok t
     Nothing -> lookVar (f, cs) id
@@ -33,20 +33,20 @@ lookVar (f, c:cs) id = case M.lookup id c of
 lookFuncSig :: Env -> Ident -> Err Type
 lookFuncSig (f, _) id = case M.lookup id f of
     Just t   -> Ok t
-    Nothing  -> Bad $ "no function with id " ++ printTree id ++ " in the environment"
+    Nothing  -> Bad $ "No function with id " ++ printTree id ++ " in the environment"
 
 -- extendVar adds a new variable and its type to the topmost (i.e. innermost) context 
 -- in the environment
 extendVar :: Env -> Ident -> Type -> Err Env
-extendVar (_, [])   id _ = Bad $ "there are no contexts without variable " ++  printTree id ++ " in the environment"
+extendVar (_, [])   id _ = Bad $ "There are no contexts without variable " ++  printTree id ++ " in the environment"
 extendVar (f, c:cs) id t = case M.lookup id c of
-    Just _  -> Bad $ "variable " ++ printTree id ++ " already in context"
+    Just _  -> Bad $ "Variable " ++ printTree id ++ " already in context"
     Nothing -> Ok (f, (M.insert id t c):cs)
 
 -- extendFun adds a new funcion and its types to the envionment
 extendFuncSig :: Env -> Ident -> Type -> Err Env
 extendFuncSig env@(f, cs) id t = case M.lookup id f of
-    Just _  -> Bad $ "function with id " ++ printTree id ++ " already exists"
+    Just _  -> Bad $ "Function with id " ++ printTree id ++ " already exists"
     Nothing -> Ok ((M.insert id t f), cs)
 
 -- newCxt adds a new, empty block/context to the environment 
@@ -132,7 +132,7 @@ checkStm env rt stm = case stm of
         Ok (env, (SBlock (DBlock stms')))
         
     SDecl t items         -> do 
-        (env', items') <- checkDecl env t items  -- TODO: might have to case:a here
+        (env', items') <- checkDecl env t items
         Ok (env', (SDecl t items'))
                     
     SAss id exp           -> do
@@ -144,20 +144,20 @@ checkStm env rt stm = case stm of
         t <- lookVar env id
         case t of
             TInt -> Ok (env, stm)
-            _    -> Bad "can only increment Int"
+            _    -> Bad $ "Not allowed to increment variables of type " ++ printTree t
             
     SDecr id              -> do
         t <- lookVar env id
         case t of
             TInt -> Ok (env, stm)
-            _    -> Bad "can only decrement Int"
+            _    -> Bad $ "Not allowed to decrement variables of type " ++ printTree t
             
     SRet exp              -> do
         te <- checkExp env rt exp
         Ok (env, (SRet te))
     SVRet                 -> case rt of
         TVoid -> Ok (env, stm)
-        _     -> Bad "return type is not void"
+        _     -> Bad "Not allowed to return void in non-void function."
         
     SIf exp stm1          -> do
         te         <- checkExp env TBool exp
@@ -203,7 +203,8 @@ checkExp env t exp = do
     et@(EType t2 _) <- inferExp env exp
     if (t2 == t) 
         then Ok et
-        else Bad $ "type of " ++ printTree exp
+        else Bad $ "Exp " ++ printTree exp ++ " has incorrect type. Expected type: " ++
+            printTree t ++ ". Actual type: " ++ printTree t2
 
 -- inferExp returns the type of exp
 inferExp :: Env -> Exp -> Err Exp  
@@ -215,20 +216,24 @@ inferExp env exp = case exp of
     ELit LFalse    -> Ok $ EType TBool exp
     ELit (LInt _)  -> Ok $ EType TInt exp
     ELit (LDoub _) -> Ok $ EType TDoub exp
-    ELit (LStr _)  -> Ok $ EType TStr exp
+    ELit (LStr _)  -> Bad "String literals not allowed outside calls to printString"
     
     -- Check that the function call has the correct types and return the return
     -- type of the function
-    EApp id exps    -> do
-        (TFun retT argTs) <- lookFuncSig env id
-        tes <- checkArgTypes env argTs exps
-        Ok $ EType retT (EApp id tes)
+    EApp id exps    -> case (\(Ident str) -> str) id of
+        "printString" -> case exps of
+            [ELit (LStr s)] -> Ok $ EType TVoid $ EApp id [(EType TStr (ELit (LStr s)))]  
+            _               -> Bad "Function printString called with incorrect args"
+        _             -> do
+            (TFun retT argTs) <- lookFuncSig env id
+            tes <- checkArgTypes env argTs exps
+            Ok $ EType retT (EApp id tes)
     
     ENeg e          -> do
         (EType t _) <- inferExp env e
         case elem t [TInt, TDoub] of
             True -> Ok $ EType t (ENeg (EType t e))
-            _    -> Bad $ "incorrect type of expression " ++ printTree e
+            _    -> Bad $ "Incorrect type of expression " ++ printTree e
     ENot e          -> do
         te <- checkExp env TBool e
         Ok $ EType TBool te
@@ -244,7 +249,7 @@ inferExp env exp = case exp of
             True -> do
                 checkExp env t e2
                 Ok $ EType t (EMul (EType t e1) op (EType t e2))
-            _    -> Bad $ "incorrect type of expression " ++ printTree e1 
+            _    -> Bad $ "Incorrect type of expression " ++ printTree e1 
     
     EAdd e1 op e2   -> do
         (EType t _) <- inferExp env e1
@@ -252,7 +257,7 @@ inferExp env exp = case exp of
             True -> do
                 checkExp env t e2
                 Ok $ EType t (EAdd (EType t e1) op (EType t e2))
-            _    -> Bad $ "incorrect type of expression " ++ printTree e1 
+            _    -> Bad $ "Incorrect type of expression " ++ printTree e1 
     
     ERel e1 op e2   -> do
         (EType t _) <- inferExp env e1
@@ -260,7 +265,7 @@ inferExp env exp = case exp of
             True -> do
                 checkExp env t e2
                 Ok $ EType TBool (ERel (EType t e1) op (EType t e2))
-            _    -> Bad $ "incorrect type of expression " ++ printTree e1 
+            _    -> Bad $ "Incorrect type of expression " ++ printTree e1 
             
     EAnd e1 e2      -> do
         te1 <- checkExp env TBool e1
@@ -279,4 +284,4 @@ checkArgTypes env (t:ts) (e:es) = do
     te <- checkExp env t e
     tes <- checkArgTypes env ts es
     Ok (te:tes)
-checkArgTypes _   _      _      = Bad "function called with incorrect nbr of args"
+checkArgTypes _   _      _      = Bad "Function called with incorrect nbr of args"

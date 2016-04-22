@@ -182,6 +182,7 @@ Lit : Integer { LInt $1 }
   | Double { LDoub $1 }
   | 'true' { LTrue }
   | 'false' { LFalse }
+  | String { LStr $1 }
 
 
 AddOp :: { AddOp }
