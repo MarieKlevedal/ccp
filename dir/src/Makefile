@@ -1,17 +1,10 @@
-all: grammar
+all: 
+	ghc TypeChecker.hs
+	ghc ReturnChecker.hs
+	ghc Main.hs
 
-grammar: Javalette.cf
-	bnfc -haskell Javalette.cf
-	happy -gca ParJavalette.y
-	alex -g LexJavalette.x
-	ghc --make TestJavalette.hs -o TestJavalette
 
 clean:
-	-rm -f *.log *.aux *.hi *.o *.dvi
-	-rm -f DocJavalette.ps
-
-distclean: clean
-	-rm -f DocJavalette.* LexJavalette.* ParJavalette.* LayoutJavalette.* SkelJavalette.* PrintJavalette.* TestJavalette.* AbsJavalette.* TestJavalette ErrM.* SharedString.* ComposOp.* Javalette.dtd XMLJavalette.*
-	
-
-
+	-rm TypeChecker.hi TypeChecker.o
+	-rm ReturnChecker.hi ReturnChecker.o
+	-rm Main Main.hi Main.o

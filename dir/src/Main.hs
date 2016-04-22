@@ -16,22 +16,19 @@ import ReturnChecker
 check :: String -> IO ()
 check s = case pProgram (myLexer s) of
     Bad err  -> do
-        stderr "ERROR"
-        stderr $ "Syntax error: " ++ err
-        exitWith (ExitFailure 1)
+        hPutStr stderr $ "ERROR\nSyntax error: " ++ err ++ "\n"
+        exitFailure
     Ok  tree -> case typecheck tree of
         Bad err -> do
-            stderr "ERROR"
-            stderr $ "Type error: " ++ err
-            exitWith (ExitFailure 1)
+            hPutStr stderr $ "ERROR\nType error: " ++ err ++ "\n"
+            exitFailure
         Ok tree -> case returncheck tree of
             Bad err -> do
-                stderr "ERROR"
-                stderr $ "Return error: " ++ err
-                exitWith (ExitFailure 1)
+                hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
+                exitFailure
             Ok _ -> do
-                stderr "OK"
-                exitWith (ExitFailure 0)
+                hPutStr stderr "OK\n"
+                exitSuccess
 
 main :: IO ()
 main = do
