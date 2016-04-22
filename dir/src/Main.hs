@@ -12,7 +12,8 @@ import ReturnChecker
 
 -- check takes the string representation of the test program as input. It 
 -- lexes and parses it into an AST and then typechecks and returnchecks it.
--- If any of the phases report an error, this is printed and TODO continue
+-- If any of the phases report an error, an "ERROR" followed by a newline
+-- and a error message is printed to standard error and then exits.
 check :: String -> IO ()
 check s = case pProgram (myLexer s) of
     Bad err  -> do
@@ -30,6 +31,8 @@ check s = case pProgram (myLexer s) of
                 hPutStr stderr "OK\n"
                 exitSuccess
 
+-- main reads a file and returns its contents as a string input for the
+-- check function.
 main :: IO ()
 main = do
   args <- getArgs

@@ -17,19 +17,18 @@ type Cxt = Map Ident Type                   -- variables with their types
 
 
 --------------------------------- ****************** ---------------------------------
---------------------------------- AUXILARY FUNCTIONS ---------------------------------
+--------------------------------- AUXILIARY FUNCTIONS ---------------------------------
 --------------------------------- ****************** ---------------------------------
 
 -- lookVar returns the type of the variable in the topmost (i.e. innermost) context of 
--- the environment in which the variable exists
+-- the environment in which the variable exist.
 lookVar :: Env -> Ident -> Err Type
 lookVar (_, [])   id = Bad $ "No variable with id " ++ printTree id ++ " in the environment"
 lookVar (f, c:cs) id = case M.lookup id c of
     Just t  -> Ok t
     Nothing -> lookVar (f, cs) id
 
--- lookFun returns a tuple with a list of the types of the argument list and the
--- return type for the function with that id 
+-- lookFunSig returns the function type signature for the function with matching id.
 lookFuncSig :: Env -> Ident -> Err Type
 lookFuncSig (f, _) id = case M.lookup id f of
     Just t   -> Ok t
@@ -43,7 +42,7 @@ extendVar (f, c:cs) id t = case M.lookup id c of
     Just _  -> Bad $ "Variable " ++ printTree id ++ " already in context"
     Nothing -> Ok (f, (M.insert id t c):cs)
 
--- extendFun adds a new funcion and its types to the envionment
+-- extendFun adds a new function and its type to the envionment
 extendFuncSig :: Env -> Ident -> Type -> Err Env
 extendFuncSig env@(f, cs) id t = case M.lookup id f of
     Just _  -> Bad $ "Function with id " ++ printTree id ++ " already exists"
@@ -79,8 +78,9 @@ addVtoC env ((DArg t id):args) = do
 ---------------------------------- TYPECHECKING -----------------------------------
 ---------------------------------- ************ -----------------------------------
 
--- typecheck first adds all the definitions of the program to the environment and then
--- makes sure all definitions are type correct
+-- typecheck first adds all the definitions of the program along with the built in
+-- functions to the environment and then makes sure all definitions are type correct.
+-- It returns a type correct and type annotated program.
 typecheck :: Program -> Err Program
 typecheck (PProg ds) = do
     env' <- addFtoEnv emptyEnv (ds ++ builtIn)
@@ -94,7 +94,8 @@ builtIn = [(FnDef TVoid (Ident "printInt")    [DArg TInt (Ident "n")]  (DBlock [
            (FnDef TDoub (Ident "readDouble")  []                       (DBlock [])),
            (FnDef TVoid (Ident "printString") [DArg TStr (Ident "s")]  (DBlock []))]
 
--- checkDefs calls checkDef for all defs in the program
+-- checkDefs calls checkDef for all definitions in the program. It returns all the
+-- type correct and type annotated function definitions.
 checkDefs :: Env -> [Def] -> Err [Def]
 checkDefs _   [] = Ok [] 
 checkDefs env (d:ds) = do
@@ -103,7 +104,8 @@ checkDefs env (d:ds) = do
     Ok $ (d':ds')
 
 -- checkDef adds a new context to the env, adds all the func args to the context and 
--- checks that all stms in its body are type correct
+-- checks that all stms in its body are type correct. It returns a type correct and
+-- type annotated function definition.
 checkDef :: Env -> Def -> Err Def
 checkDef env (FnDef t id args (DBlock stms)) = do
     env' <- addVtoC (newCxt env) args
@@ -113,7 +115,8 @@ checkDef env (FnDef t id args (DBlock stms)) = do
 
 ----------------------- checkStms and its auxilary functions ----------------------
 
--- checkStms calls checkStm for all stms in one def
+-- checkStms calls checkStm for all statements in one definition block. It returns
+-- all the type correct and type annotated statements.
 checkStms :: Env -> Type -> [Stm] -> Err [Stm]
 checkStms _   _ []     = Ok []
 checkStms env t (s:ss) = do
@@ -121,8 +124,8 @@ checkStms env t (s:ss) = do
     ss'        <- checkStms env' t ss
     Ok (s':ss')
 
--- checkStm checks that stm is type correct. Returns updated env and the 
--- stm, with all its sub-expressions type-annotated
+-- checkStm checks that stm is type correct. It returns an updated environment and
+-- the statement, with all its sub-expressions type-annotated.
 checkStm :: Env -> Type -> Stm -> Err (Env, Stm)
 checkStm env rt stm = case stm of
     SEmpty                -> Ok (env, stm)
@@ -197,7 +200,9 @@ checkDecl env t (item:items) = case item of
 
 ----------------------- checkExp and its auxilary functions -----------------------
 
--- checkExp checks that the the expression has the given type
+-- checkExp checks that the the expression has the given type. It returns the type
+-- correct and type annotated expression. If it fails it returns a string with an
+-- error message.
 checkExp :: Env -> Type -> Exp -> Err Exp
 checkExp env t exp = do
     et@(EType t2 _) <- inferExp env exp
@@ -206,7 +211,8 @@ checkExp env t exp = do
         else Bad $ "Exp " ++ printTree exp ++ " has incorrect type. Expected type: " ++
             printTree t ++ ". Actual type: " ++ printTree t2
 
--- inferExp returns the type of exp
+-- inferExp either returns the type correct and type annotated expression or an
+-- error message.
 inferExp :: Env -> Exp -> Err Exp  
 inferExp env exp = case exp of
     EVar id        -> do
@@ -277,7 +283,9 @@ inferExp env exp = case exp of
         te2 <- checkExp env TBool e2
         Ok $ EType TBool (EOr te1 te2)
 
-
+-- checkArgTypes check that the argument types of a function matches those of the
+-- function signature. It either returns the type annotated, type correct argument
+-- expressions or an error message.
 checkArgTypes :: Env -> [Type] -> [Exp] -> Err [Exp]
 checkArgTypes _   []     []     = Ok []
 checkArgTypes env (t:ts) (e:es) = do
