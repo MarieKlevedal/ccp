@@ -27,19 +27,18 @@ check s = case pProgram (myLexer s) of
             Bad err -> do
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
+            {-
             Ok _  -> do
                 hPutStr stderr "OK\n"
-                --putStrLn str
-                exitSuccess
-            {-
-            Ok _ -> case codeGen typeAnnoTree of
-                Bad err -> do
-                    hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
-                    exitFailure
-                Ok str  -> do
-                    hPutStr stderr "OK\n"
-                    putStrLn str
-                    exitSuccess -}
+                exitSuccess -}
+
+            Ok _ -> do
+                -- TODO alpha-rename
+                let code = codeGen typeAnnoTree
+                -- TODO: fixa alla konstiga filer
+                hPutStr stderr "OK\n"
+                putStrLn str
+                exitSuccess 
 
 -- main reads a file and returns its contents as a string input for the
 -- check function.
