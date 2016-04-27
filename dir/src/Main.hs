@@ -27,6 +27,11 @@ check s = case pProgram (myLexer s) of
             Bad err -> do
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
+            Ok _  -> do
+                hPutStr stderr "OK\n"
+                --putStrLn str
+                exitSuccess
+            {-
             Ok _ -> case codeGen typeAnnoTree of
                 Bad err -> do
                     hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
@@ -34,7 +39,7 @@ check s = case pProgram (myLexer s) of
                 Ok str  -> do
                     hPutStr stderr "OK\n"
                     putStrLn str
-                    exitSuccess
+                    exitSuccess -}
 
 -- main reads a file and returns its contents as a string input for the
 -- check function.
