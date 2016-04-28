@@ -3,16 +3,15 @@ TODO
 
 ¤ Grammarn har tre unused rules. Ta bort dem?
 
-¤ Skriv kommentarer till funktionerna i Main, TC och RC
-
-¤ Skriv doc-fil
-
-¤ Fixa submission-formatet
-
 
 
 Frågor
 ------
+
+
+
+Gamla frågor
+------------
 ¤ Hur bör vi hantera printString? Dess argument har ingen typ, så ska vi 
   modellera det som att den inte har några parametrar i typecheckern?
   A: Annars kan vi lägga in strängar internt (exp, type).
@@ -43,3 +42,20 @@ Make ska bygga kompilatorn. Ska inte köra saker, bara bygga. Skall bygga kompil
 
 Grade anropar jlc för varje testfil. jlc skall då anropa Main, som i sin tur
 anropar TC och sedan skriver ut meddelande som Grade läser.
+
+¤ Utskriftsformat i Main? (s 20) 
+    ¤ Hur använder vi stderr? 
+    ¤ Hur exitar man med exit code?
+  A: Se kod
+
+¤ Det funkar inte att kompillera testfilerna om vi inte kommenterar bort lite i 
+  dem ("hiding" i RunCommand och Grade).
+  A: Det har med ghc-versionen att göra. Det finns nya testfiler på kurshemsidan
+     nu.
+  
+¤ Det funkar inte att köra jlc.sh från testfilen. Behöver den kompilleras? Den 
+  hittar ingen fil med namn jlc.
+  A: Den ska bara heta jlc.
+
+¤ Hur kör testprogrammet en testfil? Anropar den jlc med en testfil?
+  A: Se kod
