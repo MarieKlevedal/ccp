@@ -30,10 +30,10 @@ check s = case pProgram (myLexer s) of
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
             Ok _ -> do
-                -- TODO alpha-rename
-                -- let code = codeGen typeAnnoTree
+                let renamedTree = alphaRen typeAnnoTree
+                putStrLn $ printTree renamedTree
+                -- let code = codeGen renamedTree
                 -- TODO: fixa alla konstiga filer
-                putStrLn $ printTree $ alphaRen typeAnnoTree
                 hPutStr stderr "OK\n"
                 exitSuccess 
 

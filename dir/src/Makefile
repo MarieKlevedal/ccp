@@ -1,6 +1,6 @@
 all: checkers
 
-checkers: TypeChecker.o ReturnChecker.o Main.o
+checkers: TypeChecker.o ReturnChecker.o AlphaRen.o Main.o
 
 TypeChecker.o: TypeChecker.hs ParJavalette.o
 	ghc TypeChecker.hs
@@ -8,7 +8,10 @@ TypeChecker.o: TypeChecker.hs ParJavalette.o
 ReturnChecker.o: ReturnChecker.hs ParJavalette.o
 	ghc ReturnChecker.hs
 
-Main.o: Main.hs TypeChecker.o ReturnChecker.o
+AlphaRen.o: AlphaRen.hs ParJavalette.o
+	ghc AlphaRen.hs
+
+Main.o: Main.hs TypeChecker.o ReturnChecker.o AlphaRen.o
 	ghc Main.hs
 
 ParJavalette.o: LexJavalette.x ParJavalette.y
