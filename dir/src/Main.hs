@@ -27,11 +27,6 @@ check s = case pProgram (myLexer s) of
             Bad err -> do
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
-            {-
-            Ok _  -> do
-                hPutStr stderr "OK\n"
-                exitSuccess -}
-
             Ok _ -> do
                 -- TODO alpha-rename
                 let code = codeGen typeAnnoTree
