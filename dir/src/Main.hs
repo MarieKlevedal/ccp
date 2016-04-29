@@ -5,10 +5,12 @@ import System.IO
 import AbsJavalette
 import LexJavalette
 import ParJavalette
+import PrintJavalette
 import ErrM
 
 import TypeChecker
 import ReturnChecker
+import AlphaRen
 
 -- check takes the string representation of the test program as input. It 
 -- lexes and parses it into an AST and then typechecks and returnchecks it.
@@ -29,10 +31,10 @@ check s = case pProgram (myLexer s) of
                 exitFailure
             Ok _ -> do
                 -- TODO alpha-rename
-                let code = codeGen typeAnnoTree
+                -- let code = codeGen typeAnnoTree
                 -- TODO: fixa alla konstiga filer
+                putStrLn $ printTree $ alphaRen typeAnnoTree
                 hPutStr stderr "OK\n"
-                putStrLn str
                 exitSuccess 
 
 -- main reads a file and returns its contents as a string input for the

@@ -191,7 +191,8 @@ checkDecl env t []           = Ok (env, [])
 checkDecl env t (item:items) = case item of
     (IDecl id) -> do
         env' <- extendVar env id t
-        checkDecl env' t items
+        (env'', items') <- checkDecl env' t items
+        Ok (env'', (IDecl id):items')
     (IInit id exp) -> do
         etype <- checkExp env t exp
         env' <- extendVar env id t

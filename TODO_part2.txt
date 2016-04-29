@@ -16,3 +16,7 @@ Kom ihåg
 ¤ Lazy && and ||
 ¤ 
 
+TODO
+----
+¤ Fixa buggen i TC (rad 192-195) även i partA
+
