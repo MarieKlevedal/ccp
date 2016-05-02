@@ -1,17 +1,26 @@
 all: checkers
 
-checkers: TypeChecker.o ReturnChecker.o AlphaRen.o Main.o
+checkers: TypeChecker.o ReturnChecker.o AlphaRen.o CodeGen.o CGEnv.o LLVM.o Main.o
 
-TypeChecker.o: TypeChecker.hs ParJavalette.o
+TypeChecker.o: TypeChecker.hs #ParJavalette.o
 	ghc TypeChecker.hs
 
-ReturnChecker.o: ReturnChecker.hs ParJavalette.o
+ReturnChecker.o: ReturnChecker.hs #ParJavalette.o
 	ghc ReturnChecker.hs
 
-AlphaRen.o: AlphaRen.hs ParJavalette.o
+AlphaRen.o: AlphaRen.hs #ParJavalette.o
 	ghc AlphaRen.hs
 
-Main.o: Main.hs TypeChecker.o ReturnChecker.o AlphaRen.o
+CodeGen.o: CodeGen.hs #ParJavalette.o
+	ghc CodeGen.hs
+
+CGEnv.o: CGEnv.hs #ParJavalette.o
+	ghc CGEnv.hs
+
+LLVM.o: LLVM.hs #ParJavalette.o
+	ghc LLVM.hs
+
+Main.o: Main.hs TypeChecker.o ReturnChecker.o AlphaRen.o CodeGen.o CGEnv.o LLVM.o
 	ghc Main.hs
 
 ParJavalette.o: LexJavalette.x ParJavalette.y

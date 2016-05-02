@@ -18,4 +18,5 @@ Kom ihåg
 
 TODO
 ----
-
+¤ Jobbar i compileDef. Behöver fixa environment (vars) och hjälpfunktion som
+  lägger in variabler efter en funktionsdeklaration

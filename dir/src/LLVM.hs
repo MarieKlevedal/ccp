@@ -34,6 +34,9 @@ data Instruction =
 
 -- TODO: remane to "instance show where" stuff
 
+instance Show Instruction where
+    show i = "instr"
+{-
 -- instrToStr converts instructions to llvm command strings
 instrToStr :: Instruction -> String
 instrToStr (Comment str)      = "; " ++ str
@@ -59,13 +62,6 @@ instrToStr (Goto label)       = "goto " ++ label
 instrToStr Return             = "return"
 instrToStr IReturn            = "ireturn"
 instrToStr (Invoke c f t)     = "invokestatic "
+-}
 
 
--- typeToStr converts types to llvm types
-typeToStr :: Type -> String
-typeToStr t = case t of
-    TInt    -> "i32"
-    TDoub   -> "double"
-    TBool   -> "i1"
-    TStr -> "i8*"
-    TVoid   -> "void"
