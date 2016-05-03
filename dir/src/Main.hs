@@ -31,8 +31,6 @@ check s = case pProgram (myLexer s) of
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
             Ok _ -> do
-                putStrLn $ printTree typeAnnoTree
-                putStrLn "---------- ------------------- -------------\n"
                 let renamedTree = alphaRen typeAnnoTree
                 putStrLn $ printTree renamedTree
                 putStrLn "---------- Generated LLVM code -------------\n"

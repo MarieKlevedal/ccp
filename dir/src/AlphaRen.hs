@@ -37,7 +37,7 @@ rmCxt env = env{cxts = tail (cxts env)}
 addVToEnv :: Env -> Ident -> (Env, Ident)
 addVToEnv env id = (env'', newId) where
     env'   = env{vCount = (vCount env)+1}
-    newId  = Ident $ "v" ++ show (vCount env')
+    newId  = Ident $ "%v" ++ show (vCount env')
     (c:cs) = cxts env'
     c'     = M.insert id newId c
     env''  = env'{cxts = (c':cs)}

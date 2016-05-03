@@ -35,7 +35,7 @@ newVar = do
     env <- get
     let v = varCounter env
     modify (\env -> env{varCounter = (v+1)})
-    return $ Ident $ "t" ++ show v
+    return $ Ident $ "%t" ++ show v
 
 -- lookupVar returns the corresponding LLVM variable of a given Javalette variable
 lookupVar :: Ident -> State Env Ident

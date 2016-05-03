@@ -7,14 +7,14 @@ data Instruction =
     --Comment String     |
       Text  String
     | Label String
-    | Alloca Type Ident
-    | Store Type Ident Ident
-    | Load Ident Type Ident
+    | Alloca Type String
+    | Store Type String String
+    | Load String Type String
+    | Return Type String
+    | IAdd String String String
    {-
     Iconst1            |
     Iconst0            |
-    ILoad Int          |   --address
-    IStore Int         |   --address
     Bipush Int         |
     Pop                |
     Duplicate          |
@@ -41,10 +41,13 @@ data Instruction =
 instance Show Instruction where
     show (Text s)             = s
     show (Label s)            = s ++ ": "
-    show (Alloca t (Ident s)) = "%" ++ s ++ " = alloca " ++ toLType t 
-    show (Store t lId jId)    = "store " ++ (toLType t) ++ " " ++ (showId lId) ++ 
-                                " , " ++ (toLType t) ++ "* " ++ (showId jId) 
-    show (Load lId t jId)     = (showId lId) ++ " = load " ++ (toLType t) ++ "* " ++ (showId jId)
+    show (Alloca t id)        = id ++ " = alloca " ++ toLType t 
+    show (Store t lId jId)    = "store " ++ (toLType t) ++ " " ++ lId ++ 
+                                " , " ++ (toLType t) ++ "* " ++ jId
+    show (Load lId t jId)     = lId ++ " = load " ++ (toLType t) ++ "* " ++ jId
+    show (Return t s)         = "ret " ++ (toLType t) ++ " " ++ s         
+    show (IAdd res id1 id2)   = res ++ " = add i32 " ++ id1 ++ " , " ++ id2
+    
     show i                    = "instr"
 {-
 -- instrToStr converts instructions to llvm command strings
@@ -83,6 +86,4 @@ toLType t = case t of
     TStr    -> "i8*"
     TVoid   -> "void"
 
-showId :: Ident -> String
-showId (Ident str) = "%" ++ str
 

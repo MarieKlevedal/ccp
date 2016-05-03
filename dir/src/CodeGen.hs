@@ -59,10 +59,10 @@ convertFuncArgs ((DArg t id):as) = do
 
 emitFuncArgs :: [Arg] -> State Env ()
 emitFuncArgs []                 = return ()
-emitFuncArgs (a@(DArg t id):as) = do
-    emit $ Alloca t id
-    lId <- lookupVar id
-    emit $ Store t lId id
+emitFuncArgs (a@(DArg t id@(Ident s)):as) = do
+    emit $ Alloca t s
+    (Ident s2) <- lookupVar id
+    emit $ Store t s2 s
     emitFuncArgs as
 
 --------------------------- ***************** -------------------------
@@ -108,15 +108,23 @@ compileStm :: Stm -> State Env ()
 compileStm  SEmpty              = return ()
 compileStm (SBlock (DBlock ss)) = compileStms ss
 compileStm (SDecl t items)      = compileItems t items
+compileStm (SAss (Ident str) e@(EType t _)) = do
+    res <- compileExp e
+    emit $ Store t res str
+compileStm (SIncr id)           = error "SIncr nyi"
+compileStm (SDecr id)           = error "SDecr nyi"
+compileStm (SRet e@(EType t _)) = do
+    ret <- compileExp e
+    emit $ Return t ret
+compileStm  SVRet               = error "SVRet nyi"
+compileStm (SIf e s)            = error "SIf nyi"
+compileStm (SIfElse e s1 s2)    = error "SIfElse nyi"    
+compileStm (SWhile e s)         = error "SWhile nyi"
+compileStm (SExp e)             = do
+    compileExp e
+    return ()
 
-compileStm (SExp e)        = compileExp e
-
-compileStm s = undefined
     {-
-    SDecls _ ids  -> extendVars ids
-    SInit  _ id e -> do
-        extendVar id
-        compileExp (EAss (EId id) e)
     SReturn e     -> do
         compileExp e
         emitComment "*** just about to return an int ***"
@@ -146,42 +154,54 @@ compileStm s = undefined
 
 compileItems :: Type -> [Item] -> State Env ()
 compileItems _ []                  = return ()
-compileItems t ((IDecl id):is)     = do
+compileItems t ((IDecl id@(Ident s)):is)     = do
     allocateVar id
-    emit $ Alloca t id
+    emit $ Alloca t s
     compileItems t is
-compileItems t ((IInit id exp):is) = do
+compileItems t ((IInit id@(Ident s) exp):is) = do
     allocateVar id
-    emit $ Alloca t id
-    
-    -- TODO: call compileExp and store the returned LLVM-var with the jId
-    
+    emit $ Alloca t s
+    compileStm $ SAss id exp
     compileItems t is
 
+{-
 -- compileExps compiles all expressions
 compileExps :: [Exp] -> State Env ()
 compileExps []       = return ()
 compileExps (e:exps) = do
     compileExp e
     compileExps exps
-
+-}
 -- compileExp compiles an expression with pattern matching
-compileExp :: Exp -> State Env ()
-compileExp (EType t (EVar id)) = do
-    lId <- lookupVar id
-    emit $ Load lId t id
-    
-compileExp (EType t (ELit (LInt n))) = undefined
-compileExp e = undefined
+compileExp :: Exp -> State Env String
+compileExp (EType t (EVar id@(Ident s1))) = do
+    (Ident s2) <- lookupVar id
+    emit $ Load s2 t s1
+    return s2
+compileExp (ELit l) = case l of
+    LInt n  -> return $ show n
+    LDoub x -> return $ show x
+    LTrue   -> return "true"
+    LFalse  -> return "false"
+    LStr s  -> return s                           -- TODO remove?
+
+compileExp (EType t (EAdd e1 Plus e2)) = do
+    str1        <- compileExp e1
+    str2        <- compileExp e2
+    (Ident res) <- newVar
+    case t of
+        TInt  -> emit $ IAdd res str1 str2
+        TDoub -> return ()                          --TODO
+    return res 
+
+compileExp (EType t e) = compileExp e 
+
+compileExp e = error "exp nyi"
 {-
 compileExp exp = case exp of
     ETrue        -> emit $ Iconst1  
     EFalse       -> emit $ Iconst0
-    EInt n       -> emit $ Bipush (fromInteger n)
-    EId id       -> do
-        addr <- lookupVar id
-        emit $ ILoad addr
-    
+
     EApp id@(Id name) es -> do
         compileExps es
         (ts, rt) <- lookupFun id
