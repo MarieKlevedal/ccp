@@ -73,7 +73,7 @@ lookupFun env id = fromJust $ M.lookup id $ funcs env
 renameFuncNames :: Env -> [Def] -> [Def] -> (Env, [Def])
 renameFuncNames env []                          newDs = (env, newDs)
 renameFuncNames env (d@(FnDef t id as b):oldDs) newDs = 
-    renameFuncNames env' oldDs (newDs ++ [d'])
+    renameFuncNames env' oldDs (d':newDs)
         where (env', newId) = addFToEnv env id 
               d'            = (FnDef t newId as b)
 
@@ -82,7 +82,7 @@ renameFuncNames env (d@(FnDef t id as b):oldDs) newDs =
 alphaRen :: Program -> Program
 alphaRen (PProg ds) = PProg newDs'
     where (env, newDs)  = renameFuncNames startEnv ds [] 
-          (_  , newDs') = renameDefs env newDs
+          (_  , newDs') = renameDefs env (reverse newDs)
 
 
 -- renameDefs renames all the variables in every def
@@ -102,7 +102,7 @@ renameDef env d@(FnDef t id as b@(DBlock ss)) =
 -- renameArgs renames the arguments of a function
 renameArgs :: Env -> [Arg] -> [Arg] -> (Env, [Arg])
 renameArgs env []                     newAVs = (env, newAVs)
-renameArgs env (a@(DArg t id):oldAVs) newAVs = renameArgs env' oldAVs (newAVs ++ [av'])
+renameArgs env (a@(DArg t id):oldAVs) newAVs = renameArgs env' oldAVs (av':newAVs)
     where (env', newId) = addVToEnv env id
           av'           = (DArg t newId)
           

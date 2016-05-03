@@ -32,10 +32,11 @@ codeGen filename prg = unlines (Prelude.map instrToStr jcode)
 emit :: Instruction -> State Env ()
 emit i = modify (\env -> env{code = i: code env})
 
+{-
 -- emitComment emits a jasmin comment
 emitComment :: String -> State Env ()
 emitComment str = emit $ Comment str
-
+-}
 -- emitBlank emits a blank row
 emitBlank :: State Env ()
 emitBlank = emitText ""
@@ -44,19 +45,25 @@ emitBlank = emitText ""
 emitText :: String -> State Env ()
 emitText str = emit $ Text str
     
--- convertType converts types to llvm types
-convertType :: Type -> String
-convertType t = case t of
-    TInt    -> "i32"
-    TDoub   -> "double"
-    TBool   -> "i1"
-    TStr    -> "i8*"
-    TVoid   -> "void"
 
-convertFuncArgs :: [Arg] -> String
-convertFuncArgs []                        = ")"
-convertFuncArgs ((DArg t (Ident str)):as) = 
-    (convertType t) ++ " %" ++ str ++ convertFuncArgs as
+convertFuncArgs :: [Arg] -> State Env String
+convertFuncArgs []               = return ")"
+convertFuncArgs [(DArg t id)]    = do
+    (Ident llvmId) <- allocateVar id
+    return $ (toLType t) ++ " " ++ llvmId ++ ")"
+convertFuncArgs ((DArg t id):as) = do
+    (Ident llvmId) <- allocateVar id
+    remainder      <- convertFuncArgs as
+    return $ (toLType t) ++ " " ++ llvmId ++ " , " ++ remainder
+
+
+emitFuncArgs :: [Arg] -> State Env ()
+emitFuncArgs []                 = return ()
+emitFuncArgs (a@(DArg t id):as) = do
+    emit $ Alloca t id
+    lId <- lookupVar id
+    emit $ Store t lId id
+    emitFuncArgs as
 
 --------------------------- ***************** -------------------------
 --------------------------- COMPILE FUNCTIONS -------------------------
@@ -78,16 +85,16 @@ compileDefs (d:ds) = do
 -- compileDef compiles the def
 compileDef :: Def -> State Env ()
 compileDef (FnDef rt id@(Ident str) args (DBlock ss)) = do
-    emitText $ "define " ++ (convertType rt) ++ " @" ++ str ++ 
-               "(" ++ (convertFuncArgs args) ++ " {"
-    
-    --extendVars $ Prelude.map (\(DArg _ id) -> id) args
+    argStr <- convertFuncArgs args
+    emitText $ "define " ++ (toLType rt) ++ " @" ++ str ++ "(" ++ argStr ++ " {"
+    emit $ Label "entry"
+    emitFuncArgs args
     
     compileStms ss
     
     emitText "}"   
 
- {-
+ 
 -- compileStms compiles a list of statements 
 compileStms :: [Stm] -> State Env ()
 compileStms []     = return ()
@@ -95,10 +102,17 @@ compileStms (s:ss) = do
     compileStm s
     compileStms ss
 
+
 -- compileStm compiles a single statement
 compileStm :: Stm -> State Env ()
-compileStm stm = case stm of
-    SExp e        -> compileExp e
+compileStm  SEmpty              = return ()
+compileStm (SBlock (DBlock ss)) = compileStms ss
+compileStm (SDecl t items)      = compileItems t items
+
+compileStm (SExp e)        = compileExp e
+
+compileStm s = undefined
+    {-
     SDecls _ ids  -> extendVars ids
     SInit  _ id e -> do
         extendVar id
@@ -117,11 +131,6 @@ compileStm stm = case stm of
         compileStm stm
         emit $ Goto lTest
         emit $ Label lEnd
-    SBlock stms   -> do
-        emitComment "*** new block ***"
-        newBlock
-        compileStms stms
-        exitBlock
     SIfElse exp stm1 stm2 -> do
         emitComment "*** start of if-else ***"
         lTrue  <- newLabel
@@ -133,13 +142,21 @@ compileStm stm = case stm of
         emit $ Label lFalse
         compileStm stm2
         emit $ Label lTrue
+-}
 
--- extendVars takes a list of Ids and adds them to the environment
-extendVars :: [Id] -> State Env ()
-extendVars []       = return ()
-extendVars (id:ids) = do
-    extendVar id
-    extendVars ids
+compileItems :: Type -> [Item] -> State Env ()
+compileItems _ []                  = return ()
+compileItems t ((IDecl id):is)     = do
+    allocateVar id
+    emit $ Alloca t id
+    compileItems t is
+compileItems t ((IInit id exp):is) = do
+    allocateVar id
+    emit $ Alloca t id
+    
+    -- TODO: call compileExp and store the returned LLVM-var with the jId
+    
+    compileItems t is
 
 -- compileExps compiles all expressions
 compileExps :: [Exp] -> State Env ()
@@ -150,6 +167,13 @@ compileExps (e:exps) = do
 
 -- compileExp compiles an expression with pattern matching
 compileExp :: Exp -> State Env ()
+compileExp (EType t (EVar id)) = do
+    lId <- lookupVar id
+    emit $ Load lId t id
+    
+compileExp (EType t (ELit (LInt n))) = undefined
+compileExp e = undefined
+{-
 compileExp exp = case exp of
     ETrue        -> emit $ Iconst1  
     EFalse       -> emit $ Iconst0

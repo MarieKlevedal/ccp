@@ -3,14 +3,15 @@ int main () {
     x++;
     x = 5;
     
-    f(5);
+    f(5, 2.3);
     
     x = 3 ;
     return 0;
 }
 
-void f(int x) {
-    int y = x + 1;
+void f(int x, double y) {
+    int z = x + 1;
+    double w = y ;
     return;
 }
 
@@ -18,14 +19,3 @@ void g(int x) {
     return;
 }
 
-void h(int x) {
-    return;
-}
-
-void j(int x) {
-    return;
-}
-
-void k(int x) {
-    return;
-}

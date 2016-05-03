@@ -4,9 +4,13 @@ import AbsJavalette
 
 
 data Instruction =
-    Comment String     |
-    Text String        |
-    Label String       |
+    --Comment String     |
+      Text  String
+    | Label String
+    | Alloca Type Ident
+    | Store Type Ident Ident
+    | Load Ident Type Ident
+   {-
     Iconst1            |
     Iconst0            |
     ILoad Int          |   --address
@@ -27,7 +31,7 @@ data Instruction =
     Return             |
     IReturn            |
     Invoke String String Type
-
+-}
 -------------------------- ******************** -------------------------
 -------------------------- Pretty printer funcs -------------------------
 -------------------------- ******************** -------------------------
@@ -35,7 +39,13 @@ data Instruction =
 -- TODO: remane to "instance show where" stuff
 
 instance Show Instruction where
-    show i = "instr"
+    show (Text s)             = s
+    show (Label s)            = s ++ ": "
+    show (Alloca t (Ident s)) = "%" ++ s ++ " = alloca " ++ toLType t 
+    show (Store t lId jId)    = "store " ++ (toLType t) ++ " " ++ (showId lId) ++ 
+                                " , " ++ (toLType t) ++ "* " ++ (showId jId) 
+    show (Load lId t jId)     = (showId lId) ++ " = load " ++ (toLType t) ++ "* " ++ (showId jId)
+    show i                    = "instr"
 {-
 -- instrToStr converts instructions to llvm command strings
 instrToStr :: Instruction -> String
@@ -64,4 +74,15 @@ instrToStr IReturn            = "ireturn"
 instrToStr (Invoke c f t)     = "invokestatic "
 -}
 
+-- toLType converts types to llvm types
+toLType :: Type -> String
+toLType t = case t of
+    TInt    -> "i32"
+    TDoub   -> "double"
+    TBool   -> "i1"
+    TStr    -> "i8*"
+    TVoid   -> "void"
+
+showId :: Ident -> String
+showId (Ident str) = "%" ++ str
 

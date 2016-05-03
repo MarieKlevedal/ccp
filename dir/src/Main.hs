@@ -11,6 +11,7 @@ import ErrM
 import TypeChecker
 import ReturnChecker
 import AlphaRen
+import CodeGen
 
 -- check takes the string representation of the test program as input. It 
 -- lexes and parses it into an AST and then typechecks and returnchecks it.
@@ -30,9 +31,13 @@ check s = case pProgram (myLexer s) of
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
             Ok _ -> do
+                putStrLn $ printTree typeAnnoTree
+                putStrLn "---------- ------------------- -------------\n"
                 let renamedTree = alphaRen typeAnnoTree
                 putStrLn $ printTree renamedTree
-                -- let code = codeGen renamedTree
+                putStrLn "---------- Generated LLVM code -------------\n"
+                let code = codeGen renamedTree
+                putStrLn code
                 -- TODO: fixa alla konstiga filer
                 hPutStr stderr "OK\n"
                 exitSuccess 

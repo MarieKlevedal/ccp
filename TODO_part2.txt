@@ -18,5 +18,4 @@ Kom ihåg
 
 TODO
 ----
-¤ Jobbar i compileDef. Behöver fixa environment (vars) och hjälpfunktion som
-  lägger in variabler efter en funktionsdeklaration
+¤ CompileDecl and compileExp. Need to return Id (LLVM) in compileExp?

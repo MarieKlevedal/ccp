@@ -11,7 +11,7 @@ import LLVM
 data Env = Env {
     --filename        :: String,               -- the name of the current testfile
     vars         :: M.Map Ident Ident,    -- map of id1 (in Javalette) + id2 
-    -- that points at id1
+                                          -- that points at id1
     funcs        :: M.Map Ident Type,     -- map of function id + function type
     varCounter   :: Int,                  -- the next available name for a variable
     labelCounter :: Int,                  -- the next free label number
@@ -35,15 +35,15 @@ newVar = do
     env <- get
     let v = varCounter env
     modify (\env -> env{varCounter = (v+1)})
-    return $ Ident $ "%t" ++ show v
+    return $ Ident $ "t" ++ show v
 
--- lookupVar returns the address of a variable in the environment
+-- lookupVar returns the corresponding LLVM variable of a given Javalette variable
 lookupVar :: Ident -> State Env Ident
 lookupVar id = do
     env <- get
     case M.lookup id (vars env) of
         Just id2 -> return id2
-        Nothing  -> error $ "no variable with id " ++ printTree id ++ " in the environment.\n"   
+        Nothing  -> error $ "no Javalette variable with id " ++ printTree id ++ " in the environment.\n"   
 
 -- lookupFun returns the type of a function with the given id if it exists in the environment
 lookupFun :: Ident -> State Env Type
@@ -53,15 +53,15 @@ lookupFun id = do
         Just t   -> return t
         Nothing  -> error $ "no function with id " ++ printTree id ++ " in the environment.\n"
 
-{-
--- extendVar adds a new variable id to the environment
-extendVar :: Ident -> State Env ()
-extendVar id = do
-    addr <- newAddr
+
+-- allocateVar maps a Javalette variable to a LLVM variable name
+allocateVar :: Ident -> State Env Ident
+allocateVar id = do
+    var <- newVar
     env <- get
-    let cxt = vars env
-    modify (\env -> env{vars = M.insert id addr cxt})
--}
+    modify (\env -> env{vars = M.insert id var (vars env)})
+    return var
+
 -- extendFun adds a new function to the the environment
 extendFun :: Ident -> Type -> State Env ()
 extendFun id t = do
