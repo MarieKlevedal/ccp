@@ -1,6 +1,6 @@
-all: compiler
+all: Main
 
-compiler: Main.hs TypeChecker.hs ReturnChecker.hs ParJavalette.hs
+Main: Main.hs TypeChecker.hs ReturnChecker.hs ParJavalette.hs
 	ghc Main.hs
 
 ParJavalette.hs: ParJavalette.y
