@@ -21,7 +21,7 @@ import CGEnv
 -- compilation of the program, and returns it as a string
 codeGen :: {-FilePath ->-} Program -> String
 codeGen prg = unlines (Prelude.map show llvmCode) where
-    llvmCode  = reverse $ code $ compileProg prg `execState` emptyEnv
+    llvmCode  = reverse $ code $ compileProg prg `execState` startEnv
 {-
 codeGen filename prg = unlines (Prelude.map instrToStr jcode)
     where

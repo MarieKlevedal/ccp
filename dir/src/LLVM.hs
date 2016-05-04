@@ -49,33 +49,7 @@ instance Show Instruction where
     show (IAdd res id1 id2)   = res ++ " = add i32 " ++ id1 ++ " , " ++ id2
     
     show i                    = "instr"
-{-
--- instrToStr converts instructions to llvm command strings
-instrToStr :: Instruction -> String
-instrToStr (Comment str)      = "; " ++ str
-instrToStr (Text str)         = str
-instrToStr (Label str)        = str ++ ":"
-instrToStr Iconst1            = "iconst_1"
-instrToStr Iconst0            = "iconst_0"
-instrToStr (Bipush x)         = "bipush " ++ (show x)
-instrToStr Pop                = "pop"
-instrToStr Duplicate          = "dup"
-instrToStr (ILoad addr)       = "iload " ++ (show addr)
-instrToStr (IStore addr)      = "istore " ++ (show addr)
-instrToStr IMul               = "imul"
-instrToStr IDiv               = "idiv"
-instrToStr IAdd               = "iadd"
-instrToStr ISub               = "isub"
-instrToStr (IfCmLT label)     = "if_icmplt " ++ label
-instrToStr (IfCmLTEQ label)   = "if_icmple " ++ label
-instrToStr (IfCmEQ label)     = "if_icmpeq " ++ label
-instrToStr (IfCmNEQ label)    = "if_icmpne " ++ label
-instrToStr (IfEQ label)       = "ifeq " ++ label
-instrToStr (Goto label)       = "goto " ++ label
-instrToStr Return             = "return"
-instrToStr IReturn            = "ireturn"
-instrToStr (Invoke c f t)     = "invokestatic "
--}
+
 
 -- toLType converts types to llvm types
 toLType :: Type -> String
@@ -85,5 +59,4 @@ toLType t = case t of
     TBool   -> "i1"
     TStr    -> "i8*"
     TVoid   -> "void"
-
 

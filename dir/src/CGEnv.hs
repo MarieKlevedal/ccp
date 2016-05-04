@@ -68,9 +68,9 @@ extendFun id t = do
     env <- get
     modify (\env -> env{funcs = M.insert id t (funcs env)})
 
--- emptyEnv creates an empty environment with default values 
-emptyEnv :: {-String ->-} Env
-emptyEnv {-fname-} = Env{
+-- startEnv creates an empty environment with default values 
+startEnv :: {-String ->-} Env
+startEnv {-fname-} = Env{
     --filename        = fname,
     vars            = M.empty,
     funcs           = 

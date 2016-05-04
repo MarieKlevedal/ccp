@@ -1,11 +1,6 @@
 Tips
 ----
 ¤ Lec notes 4 har bra tips och kodexempel
-¤ Det finns inga nested scopes i LLVM. Använd alpha-renaming innan CG.
-¤ Praktiskt att behandla labels som instructions, så räcker det med en
-  [Instruction]
-¤ Snyggare med en egen modul för LLVM, med Instruction-datatypen, en
-  prittyPrinter och emit
 ¤ Se lec notes 4 för att se hur man anropar printString. Om man anropar den
   flera gånger med samma argument är det enklast att skapa en global
   variabel för varje anrop.
@@ -18,4 +13,4 @@ Kom ihåg
 
 TODO
 ----
-¤ CompileDecl and compileExp. Need to return Id (LLVM) in compileExp?
+¤ Implementera resten av casen i Stm och Exp
