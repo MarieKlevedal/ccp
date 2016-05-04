@@ -15,11 +15,9 @@ data Env = Env {
     funcs        :: M.Map Ident Type,     -- map of function id + function type
     varCounter   :: Int,                  -- the next available name for a variable
     labelCounter :: Int,                  -- the next free label number
+    header       :: [Instruction],        -- list of header instructions to execute
     code         :: [Instruction]         -- list of instructions to execute
 }
-
---type Context = M.Map Ident Int     -- the Int is the address for the variable
-
 
 -- newLabel returns a new label and increases labelCounter by 1
 newLabel :: State Env String
@@ -36,6 +34,13 @@ newVar = do
     let v = varCounter env
     modify (\env -> env{varCounter = (v+1)})
     return $ Ident $ "%t" ++ show v
+    
+newGlobVar :: State Env Ident
+newGlobVar = do
+    env <- get
+    let v = varCounter env
+    modify (\env -> env{varCounter = (v+1)})
+    return $ Ident $ "@s" ++ show v
 
 -- lookupVar returns the corresponding LLVM variable of a given Javalette variable
 lookupVar :: Ident -> State Env Ident
@@ -81,12 +86,13 @@ startEnv {-fname-} = Env{
          M.insert (Ident "readDouble")  (TFun TDoub [])      M.empty,
     varCounter      = 0,
     labelCounter    = 0,
+    header          = [],
     code            = []
     }
 
 -- addDefs takes a list of Defs and adds them to the environment
 addDefs :: [Def] -> State Env ()
-addDefs []                         = return ()
+addDefs []                       = return ()
 addDefs ((FnDef t id args _):ds) = do
     extendFun id $ TFun t $ Prelude.map (\(DArg t _) -> t) args
     addDefs ds

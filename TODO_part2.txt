@@ -7,10 +7,12 @@ Tips
 
 Kom ihåg
 --------
-¤ Initiera int till 0 om inget annat anges osv (se s. 9)
 ¤ Lazy && and ||
-¤ 
 
 TODO
 ----
 ¤ Implementera resten av casen i Stm och Exp
+
+Frågor
+------
+¤ Behöver vi ha med \0A i de globala strängarna? Vad är den till för?
