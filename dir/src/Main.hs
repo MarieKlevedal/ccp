@@ -31,12 +31,13 @@ check s = case pProgram (myLexer s) of
                 hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
                 exitFailure
             Ok _ -> do
+                {-
                 let renamedTree = alphaRen typeAnnoTree
                 putStrLn $ printTree renamedTree
                 putStrLn "---------- Generated LLVM code -------------\n"
                 let code = codeGen renamedTree
                 putStrLn code
-                -- TODO: fixa alla konstiga filer
+                -- TODO: fixa alla konstiga filer -}
                 hPutStr stderr "OK\n"
                 exitSuccess 
 

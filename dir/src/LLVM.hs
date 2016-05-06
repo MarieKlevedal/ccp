@@ -17,26 +17,6 @@ data Instruction =
     | Return Type String
     | IAdd String String String
     | FAdd String String String
-   {-
-    Iconst1            |
-    Iconst0            |
-    Bipush Int         |
-    Pop                |
-    Duplicate          |
-    IMul               |
-    IDiv               |
-    IAdd               |    
-    ISub               |
-    IfCmLT String      |    --label
-    IfCmLTEQ String    |    --label
-    IfCmEQ String      |    --label
-    IfCmNEQ String     |    --label
-    IfEQ String        |    --label
-    Goto String        |    --label
-    Return             |
-    IReturn            |
-    Invoke String String Type
--}
 
 
 instance Show Instruction where
@@ -57,8 +37,6 @@ instance Show Instruction where
     show (Return t s)             = "ret " ++ (toLType t) ++ " " ++ s         
     show (IAdd res id1 id2)       = res ++ " = add i32 " ++ id1 ++ " , " ++ id2
     show (FAdd res id1 id2)       = res ++ " = fadd double " ++ id1 ++ " , " ++ id2
-    
-    show i                    = "instr"
 
 
 -- toLType converts Javalette types to LLVM types
