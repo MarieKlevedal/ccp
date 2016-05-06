@@ -59,9 +59,9 @@ lookupFun id = do
         Nothing  -> error $ "no function with id " ++ printTree id ++ " in the environment.\n"
 
 
--- allocateVar maps a Javalette variable to a LLVM variable name
-allocateVar :: Ident -> State Env Ident
-allocateVar id = do
+-- extendVar maps a Javalette variable to a LLVM variable name
+extendVar :: Ident -> State Env Ident
+extendVar id = do
     var <- newVar
     env <- get
     modify (\env -> env{vars = M.insert id var (vars env)})

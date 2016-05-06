@@ -1,8 +1,7 @@
 int main () {
     int x ;
-    double y ;
-    boolean b ;
-    
+    x = x + 1 ;
+    x = x + 2 ;
     return x ;
 }
 

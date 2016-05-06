@@ -1,2 +1,9 @@
 #!/bin/bash
 exec ./src/Main "$@"
+
+#http://wiki.bash-hackers.org/commands/builtin/exec
+
+llvm-as test.ll
+llvm-link test.bc ./lib/runtime.bc -o main.bc
+llc -filetype=obj main.bc
+gcc main.o

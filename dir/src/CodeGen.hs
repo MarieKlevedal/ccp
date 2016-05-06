@@ -55,10 +55,10 @@ emitText str = emit $ Text str
 convertFuncArgs :: [Arg] -> State Env String
 convertFuncArgs []               = return ")"
 convertFuncArgs [(DArg t id)]    = do
-    (Ident llvmId) <- allocateVar id
+    (Ident llvmId) <- extendVar id
     return $ (toLType t) ++ " " ++ llvmId ++ ")"
 convertFuncArgs ((DArg t id):as) = do
-    (Ident llvmId) <- allocateVar id
+    (Ident llvmId) <- extendVar id
     remainder      <- convertFuncArgs as
     return $ (toLType t) ++ " " ++ llvmId ++ " , " ++ remainder
 
@@ -165,12 +165,12 @@ compileStm (SExp e)             = do
 compileItems :: Type -> [Item] -> State Env ()
 compileItems _ []                  = return ()
 compileItems t ((IDecl id@(Ident s)):is)     = do
-    allocateVar id
+    extendVar id
     emit $ Alloca t s
     defaultValue t s
     compileItems t is
 compileItems t ((IInit id@(Ident s) exp):is) = do
-    allocateVar id
+    extendVar id
     emit $ Alloca t s
     compileStm $ SAss id exp
     compileItems t is
@@ -195,6 +195,7 @@ compileExp :: Exp -> State Env String
 compileExp (EType t (EVar id@(Ident s1))) = do
     (Ident s2) <- lookupVar id
     emit $ Load s2 t s1
+    extendVar id
     return s2
     
 compileExp (ELit l) = case l of
