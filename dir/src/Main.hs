@@ -18,28 +18,18 @@ import CodeGen
 -- If any of the phases report an error, an "ERROR" followed by a newline
 -- and a error message is printed to standard error and then exits.
 check :: String -> IO ()
-check s = case pProgram (myLexer s) of
-    Bad err  -> do
-        hPutStr stderr $ "ERROR\nSyntax error: " ++ err ++ "\n"
-        exitFailure
-    Ok  tree -> case typecheck tree of
-        Bad err -> do
-            hPutStr stderr $ "ERROR\nType error: " ++ err ++ "\n"
-            exitFailure
-        Ok typeAnnoTree -> case returncheck typeAnnoTree of
-            Bad err -> do
-                hPutStr stderr $ "ERROR\nReturn error: " ++ err ++ "\n"
-                exitFailure
-            Ok _ -> do
-                {-
-                let renamedTree = alphaRen typeAnnoTree
-                putStrLn $ printTree renamedTree
-                putStrLn "---------- Generated LLVM code -------------\n"
-                let code = codeGen renamedTree
-                putStrLn code
-                -- TODO: fixa alla konstiga filer -}
-                hPutStr stderr "OK\n"
-                exitSuccess 
+check s = case compile of
+    Bad err -> hPutStr stderr ("ERROR\n" ++ err) >> exitFailure
+    Ok  str -> hPutStr stderr ("OK\n\n" ++ str)    >> exitSuccess
+  where
+    compile :: Err String
+    compile = do
+        pTree <- pProgram (myLexer s)
+        tTree <- typecheck pTree
+        returncheck tTree
+        let renamedTree = alphaRen tTree
+        let code = codeGen renamedTree
+        return code
 
 -- main reads a file and returns its contents as a string input for the
 -- check function.

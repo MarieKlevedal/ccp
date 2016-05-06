@@ -139,10 +139,6 @@ compileStm (SExp e)             = do
     return ()
 
     {-
-    SReturn e     -> do
-        compileExp e
-        emitComment "*** just about to return an int ***"
-        emit IReturn
     SWhile e stm  -> do
         emitComment "*** start of while ***"
         lTest <- newLabel
@@ -185,6 +181,7 @@ defaultValue t jName = case t of
     TDoub -> emit $ Store TDoub "0.0"   jName
     TBool -> emit $ Store TBool "false" jName
 
+
 -- compileExps compiles all expressions
 compileExps :: [Exp] -> State Env [String]
 compileExps []     = return []
@@ -205,7 +202,6 @@ compileExp (ELit l) = case l of
     LDoub x -> return $ show x
     LTrue   -> return "true"
     LFalse  -> return "false"
-    LStr s  -> return s                           -- TODO remove?
 
 compileExp (EApp id@(Ident name) es) = case name of
     "printString" -> do
