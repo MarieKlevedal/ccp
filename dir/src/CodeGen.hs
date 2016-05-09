@@ -114,7 +114,9 @@ compileStms :: [Stm] -> State Env ()
 compileStms []     = return ()
 compileStms (s:ss) = do
     compileStm s
-    compileStms ss
+    case (ss, s) of
+        ([], SIfElse _ _ _) -> emitText $ "unreachable"
+        _                   -> compileStms ss
 
 
 -- compileStm compiles a single statement
@@ -132,12 +134,25 @@ compileStm (SRet e@(EType t _)) = do
     emit $ Return t ret
 compileStm  SVRet               = error "SVRet nyi"
 compileStm (SIf e s)            = error "SIf nyi"
-compileStm (SIfElse e s1 s2)    = error "SIfElse nyi"    
+compileStm (SIfElse e s1 s2)    = do
+    lTrue  <- newLabel
+    lFalse <- newLabel
+    lEnd   <- newLabel
+    str    <- compileExp e
+    emit $ Br2 str lTrue lFalse
+    emit $ Label lTrue
+    compileStm s1
+    emit $ Br1 lEnd
+    emit $ Label lFalse
+    compileStm s2
+    emit $ Br1 lEnd
+    emit $ Label lEnd
+    
+    
 compileStm (SWhile e s)         = error "SWhile nyi"
 compileStm (SExp e)             = do
     compileExp e
     return ()
-
     {-
     SWhile e stm  -> do
         emitComment "*** start of while ***"
@@ -231,6 +246,26 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
+--compileExp (EType t (ENeg e)) = do
+{-
+compileExp (ENot e) = do  
+    lTrue       <- newLabel
+    lFalse      <- newLabel
+    lEnd        <- newLabel
+    str         <- compileExp e
+    (Ident res) <- newVar
+    
+    emit $ Br2 str lTrue lFalse
+    emit $ Label lTrue
+    emit $ 
+    
+    emit $ Br1 lEnd
+    emit $ Label lFalse
+    
+    
+    emit $ Br1 lEnd
+    emit $ Label lEnd
+-}
 compileExp (EType t (EAdd e1 Plus e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2

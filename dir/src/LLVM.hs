@@ -11,6 +11,8 @@ data Instruction =
     | VFuncCall Type String [(Type, String)]
     | FuncCall String Type String [(Type, String)]
     | Label String
+    | Br1 String
+    | Br2 String String String
     | Alloca Type String
     | Store Type String String
     | Load String Type String
@@ -29,7 +31,10 @@ instance Show Instruction where
                                     (showArgs args) ++ ")"
     show (FuncCall ret t id args) = ret ++ " = call " ++ (toLType t) ++ " " ++ id ++ 
                                     "(" ++ (showArgs args) ++ ")"
-    show (Label s)                = s ++ ": "
+    show (Label s)                = "\n" ++ s ++ ": "
+    show (Br1 str)                = "br label %" ++ str
+    show (Br2 e l1 l2)            = "br i1 " ++ e ++ ", label %" ++ l1 ++ 
+                                    ", label %" ++ l2
     show (Alloca t id)            = id ++ " = alloca " ++ toLType t 
     show (Store t lId jId)        = "store " ++ (toLType t) ++ " " ++ lId ++ 
                                     " , " ++ (toLType t) ++ "* " ++ jId
