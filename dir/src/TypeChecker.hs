@@ -259,7 +259,7 @@ inferExp exp = case exp of
             _    -> fail $ "Incorrect type of expression " ++ printTree e
     ENot e          -> do
         te <- checkExp TBool e
-        return $ EType TBool te
+        return $ EType TBool $ ENot te
         
     EMul e1 Mod e2 -> do
         te1 <- checkExp TInt e1

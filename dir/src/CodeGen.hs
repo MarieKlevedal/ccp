@@ -238,7 +238,7 @@ compileExp (EApp id@(Ident name) es) = case name of
     "printString" -> do
         (Ident gVar) <- newGlobVar
         let (EType _ (ELit (LStr str))) = head es         -- must be singleton
-        let len = (length str) + 2
+        let len = (length str) + 1
         emitHeader $ GlobStr gVar len str
         
         (Ident lVar) <- newVar
@@ -261,26 +261,16 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
---compileExp (EType t (ENeg e)) = do
-{-
+compileExp (EType t (ENeg e)) = compileExp $ EType t $ EAdd (ELit $ LInt 0) Minus e
+
+
 compileExp (ENot e) = do  
-    lTrue       <- newLabel
-    lFalse      <- newLabel
-    lEnd        <- newLabel
-    str         <- compileExp e
-    (Ident res) <- newVar
-    
-    emit $ Br2 str lTrue lFalse
-    emit $ Label lTrue
-    emit $ 
-    
-    emit $ Br1 lEnd
-    emit $ Label lFalse
-    
-    
-    emit $ Br1 lEnd
-    emit $ Label lEnd
--}
+    str          <- compileExp e
+    (Ident res)  <- newVar
+    emit $ Xor res str "true"
+    (Ident res') <- newVar
+    emit $ Xor res' res "false"
+    return res'
 
 
 compileExp (EType t (EMul e1 op e2)) = do
@@ -315,33 +305,19 @@ compileExp (ERel e1@(EType t _) op e2) = do
         TDoub   -> emit $ FCmp res op str1 str2
     return res
 
-compileExp (EAnd e1 e2) = undefined
+compileExp (EAnd e1 e2) = do
+    str1        <- compileExp e1
+    str2        <- compileExp e2
+    (Ident res) <- newVar
+    emit $ And res str1 str2
+    return res
 
-compileExp (EOr e1 e2) = undefined
+compileExp (EOr e1 e2) = do
+    str1        <- compileExp e1
+    str2        <- compileExp e2
+    (Ident res) <- newVar
+    emit $ Or res str1 str2
+    return res
 
 compileExp (EType t e) = compileExp e 
 
-compileExp e = error $ "exp nyi: " ++ printTree e
-
-{-
-    EAnd e1 e2   -> do
-        compileExp e1
-        lFalse <- newLabel
-        lTrue <- newLabel
-        emit $ IfEQ lFalse   
-        compileExp e2
-        emit $ Goto lTrue
-        emit $ Label lFalse
-        emit $ Iconst0
-        emit $ Label lTrue
-    EOr e1 e2    -> do
-        compileExp e1
-        lFalse <- newLabel
-        lTrue <- newLabel
-        emit $ IfEQ lFalse   
-        emit $ Iconst1
-        emit $ Goto lTrue
-        emit $ Label lFalse
-        compileExp e2
-        emit $ Label lTrue
-         -}

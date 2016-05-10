@@ -1,8 +1,6 @@
 int main(){
-    int x = 2;
-    x++;
-    while(x>0){
-        x--;
-    }
-    return x;
+    double x = 2.0;
+    boolean b = x == 2.0;
+    boolean a = !b;
+    return 1;
 }

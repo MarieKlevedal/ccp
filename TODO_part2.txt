@@ -16,3 +16,15 @@ TODO
 Frågor
 ------
 ¤ Behöver vi ha med \0A i de globala strängarna? Vad är den till för?
+¤ Hur sparar vi namnet på testfilen i jlc? Vi behöver det sedan för att 
+  kompillera llvm-filen, länka dem osv.
+¤ Är det ok att använda LLVMs funktioner and, or och xor (är de lazy?)
+  eller får vi bara använda de funktioner som finns på listan från lec3?
+        Basic JavaLette will only need the following instructions:
+            • Terminator instructions: ret and br
+            • Arithmetic operations:
+                • For integers add, sub, mul, sdiv and srem
+                • For doubles fadd, fsub, fmul and fdiv
+            • Memory access: alloca, load, getelementptr and store
+            • Other: icmp, fcmp and call
+        Some of the extensions will need more instructions.

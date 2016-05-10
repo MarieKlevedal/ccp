@@ -31,12 +31,15 @@ data Instruction =
     
     | ICmp String RelOp String String
     | FCmp String RelOp String String
-
+    
+    | And String String String
+    | Or String String String
+    | Xor String String String
 
 instance Show Instruction where
     show (Text s)                 = s
     show (GlobStr name len s)     = name ++ " = internal constant [" ++ (show len) ++
-                                    " x i8] c\"" ++ s ++ "\0A\00\""
+                                    " x i8] c\"" ++ s ++ "\00\""
     show (GetElemPtr lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
                                     " x i8]* " ++ gId ++ ", i32 0, i32 0"
     show (VFuncCall t id args)    = "call " ++ (toLType t) ++ " " ++ id ++ "(" ++ 
@@ -71,6 +74,9 @@ instance Show Instruction where
                                     id1 ++ ", " ++ id2
     show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
                                     id1 ++ ", " ++ id2
+    show (And res id1 id2)        = res ++ " = and i1 " ++ id1 ++ ", " ++ id2
+    show (Or res id1 id2)         = res ++ " = or i1 " ++ id1 ++ ", " ++ id2
+    show (Xor res id1 id2)        = res ++ " = xor i1 " ++ id1 ++ ", " ++ id2
 
 -- toLType converts Javalette types to LLVM types
 toLType :: Type -> String
