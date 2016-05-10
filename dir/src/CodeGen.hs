@@ -259,13 +259,7 @@ compileExp (ENot e) = do
     emit $ Label lEnd
 -}
 
-{-
- | EMul Exp MulOp Exp
- | EAdd Exp AddOp Exp
- | ERel Exp RelOp Exp
- | EAnd Exp Exp
- | EOr Exp Exp
--}
+
 compileExp (EType t (EMul e1 op e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
@@ -288,6 +282,19 @@ compileExp (EType t (EAdd e1 op e2)) = do
         (Minus, TInt)   -> emit $ ISub res str1 str2
         (Minus, TDoub)  -> emit $ FSub res str1 str2
     return res 
+
+compileExp (ERel e1@(EType t _) op e2) = do
+    str1        <- compileExp e1
+    str2        <- compileExp e2
+    (Ident res) <- newVar
+    case t of
+        TInt    -> emit $ ICmp res op str1 str2
+        TDoub   -> emit $ FCmp res op str1 str2
+    return res
+
+compileExp (EAnd e1 e2) = undefined
+
+compileExp (EOr e1 e2) = undefined
 
 compileExp (EType t e) = compileExp e 
 

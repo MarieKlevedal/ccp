@@ -27,6 +27,9 @@ data Instruction =
     | FAdd String String String
     | ISub String String String
     | FSub String String String
+    
+    | ICmp String RelOp String String
+    | FCmp String RelOp String String
 
 
 instance Show Instruction where
@@ -62,6 +65,11 @@ instance Show Instruction where
     show (ISub res id1 id2)       = res ++ " = sub i32 " ++ id1 ++ " , " ++ id2
     show (FSub res id1 id2)       = res ++ " = fsub double " ++ id1 ++ " , " ++ id2
 
+    show (ICmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i32 " ++
+                                    id1 ++ ", " ++ id2
+    show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
+                                    id1 ++ ", " ++ id2
+
 -- toLType converts Javalette types to LLVM types
 toLType :: Type -> String
 toLType t = case t of
@@ -75,3 +83,20 @@ showArgs :: [(Type, String)] -> String
 showArgs []            = ""
 showArgs [(t, s)]      = (toLType t) ++ " " ++ s
 showArgs ((t, s):args) = (toLType t) ++ " " ++ s ++ ", "
+
+showIRelOp :: RelOp -> String
+showIRelOp Lt   = "slt"
+showIRelOp LtEq = "sle"
+showIRelOp Gt   = "sgt"
+showIRelOp GtEq = "sge"
+showIRelOp Eq   = "eq"
+showIRelOp NEq  = "ne"
+
+showFRelOp :: RelOp -> String
+showFRelOp Lt   = "olt"
+showFRelOp LtEq = "ole"
+showFRelOp Gt   = "ogt"
+showFRelOp GtEq = "oge"
+showFRelOp Eq   = "oeq"
+showFRelOp NEq  = "one"
+

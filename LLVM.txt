@@ -20,9 +20,6 @@ The remaining two arguments must be integer or pointer or integer vector typed. 
 
 Basic JavaLette will only need the following instructions:
 • Terminator instructions: ret and br
-• Arithmetic operations:
-    • For integers add, sub, mul, sdiv and srem
-    • For doubles fadd, fsub, fmul and fdiv
 • Memory access: alloca, load, getelementptr and store
 • Other: icmp, fcmp and call
 Some of the extensions will need more instructions.

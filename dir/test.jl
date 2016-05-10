@@ -1,6 +1,6 @@
 int main () {
-    int y = 3;
-    int z = 1/3+5+5+5+y;
-    return 42;
+    int x = 2, y = 3;
+    boolean b = x < y;
+    return x;
 }
 
