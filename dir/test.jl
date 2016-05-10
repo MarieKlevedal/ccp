@@ -1,13 +1,8 @@
 int main(){
     int x = 2;
     x++;
-    if(x==2){
-        f(x);
+    while(x>0){
+        x--;
     }
     return x;
-}
-
-
-void f(int i){
-    return;
 }

@@ -169,23 +169,26 @@ compileStm (SIfElse e s1 s2)    = do
     emit $ Br1 lEnd
     emit $ Label lEnd
         
-compileStm (SWhile e s)         = error "SWhile nyi"
+compileStm (SWhile e s)         = do
+    lTestPred <- newLabel
+    lTrue     <- newLabel
+    lEnd      <- newLabel
+    emit $ Br1 lTestPred
+    emit $ Label lTestPred
+    str       <- compileExp e
+    emit $ Br2 str lTrue lEnd
+    emit $ Label lTrue
+    compileStm s
+    emit $ Br1 lTestPred
+    emit $ Label lEnd
+
 compileStm (SExp e)             = do
     compileExp e
     return ()
-    {-
-    SWhile e stm  -> do
-        emitComment "*** start of while ***"
-        lTest <- newLabel
-        lEnd  <- newLabel
-        emit $ Label lTest
-        compileExp e
-        emit $ IfEQ lEnd
-        compileStm stm
-        emit $ Goto lTest
-        emit $ Label lEnd
--}
 
+-- compileItems is an auxiliary function to compileStm. It takes a list of
+-- variables to be allocated. It alllocates them and gives them init values
+-- (default values for the ones that don't have a user defined init value).
 compileItems :: Type -> [Item] -> State Env ()
 compileItems _ []                  = return ()
 compileItems t ((IDecl id@(Ident s)):is)     = do
@@ -199,6 +202,8 @@ compileItems t ((IInit id@(Ident s) exp):is) = do
     compileStm $ SAss id exp
     compileItems t is
 
+-- defaultValue is an auxiliary function to compileItems. It gives the given
+-- Javalette variable a default value and stores it.
 defaultValue :: Type -> String -> State Env ()
 defaultValue t jName = case t of
     TInt  -> emit $ Store TInt  "0"     jName
