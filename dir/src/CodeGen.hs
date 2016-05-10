@@ -129,8 +129,10 @@ compileStm (SDecl t items)      = compileItems t items
 compileStm (SAss (Ident str) e@(EType t _)) = do
     res <- compileExp e
     emit $ Store t res str
-compileStm (SIncr id)           = error "SIncr nyi"
-compileStm (SDecr id)           = error "SDecr nyi"
+compileStm (SIncr jId)          = compileStm $ SAss jId $ EType TInt $ 
+                                    EAdd (EType TInt (EVar jId)) Plus (ELit (LInt 1)) 
+compileStm (SDecr jId)          = compileStm $ SAss jId $ EType TInt $ 
+                                    EAdd (EType TInt (EVar jId)) Minus (ELit (LInt 1)) 
 compileStm (SRet e@(EType t _)) = do
     ret <- compileExp e
     emit $ Return t ret
@@ -199,11 +201,11 @@ compileExps (e:es) = do
 
 -- compileExp compiles an expression with pattern matching
 compileExp :: Exp -> State Env String
-compileExp (EType t (EVar id@(Ident s1))) = do
-    (Ident s2) <- lookupVar id
-    emit $ Load s2 t s1
+compileExp (EType t (EVar id@(Ident jId))) = do
+    (Ident lId) <- lookupVar id
+    emit $ Load lId t jId
     extendVar id
-    return s2
+    return lId
     
 compileExp (ELit l) = case l of
     LInt n  -> return $ show n
@@ -299,57 +301,8 @@ compileExp (EOr e1 e2) = undefined
 compileExp (EType t e) = compileExp e 
 
 compileExp e = error $ "exp nyi: " ++ printTree e
-{-
-compileExp exp = case exp of
-    ETrue        -> emit $ Iconst1  
-    EFalse       -> emit $ Iconst0
 
-    EApp id@(Id name) es -> do
-        compileExps es
-        (ts, rt) <- lookupFun id
-        env <- get
-        let c = if (elem name ["printInt", "readInt"])
-            then "Runtime"
-            else filename env
-        emitComment $ "*** calling function " ++ name ++ " ***"
-        emit $ Invoke c name ts rt
-        
-    EPostIncr e@(EId id)  -> do
-        compileExp e
-        addr <- lookupVar id
-        emit $ Duplicate
-        emit $ Iconst1
-        emit $ IAdd
-        emit $ IStore addr
-    EPostDecr e@(EId id)  -> do
-        compileExp e
-        addr <- lookupVar id
-        emit $ Duplicate
-        emit $ Iconst1
-        emit $ ISub
-        emit $ IStore addr
-    EPreIncr e@(EId id)  -> do
-        compileExp e
-        addr <- lookupVar id
-        emit $ Iconst1
-        emit $ IAdd
-        emit $ Duplicate
-        emit $ IStore addr
-    EPreDecr e@(EId id)  -> do
-        compileExp e
-        addr <- lookupVar id
-        emit $ Iconst1
-        emit $ ISub
-        emit $ Duplicate
-        emit $ IStore addr
-        
-    ELt e1 e2    -> compareBool "IfCmLT" e1 e2 
-    EGt e1 e2    -> compileExp (ELt e2 e1)
-    ELtEq e1 e2  -> compareBool "IfCmLTEQ" e1 e2
-    EGtEq e1 e2  -> compileExp (ELtEq e2 e1)
-    EEq e1 e2    -> compareBool "IfCmEQ" e1 e2
-    ENEq e1 e2   -> compareBool "IfCmNEQ" e1 e2 
-        
+{-
     EAnd e1 e2   -> do
         compileExp e1
         lFalse <- newLabel
@@ -370,26 +323,4 @@ compileExp exp = case exp of
         emit $ Label lFalse
         compileExp e2
         emit $ Label lTrue
-        
-    EAss (EId id) e2   -> do
-        compileExp e2         
-        addr <- lookupVar id  
-        emit $ IStore addr   
-        emit $ ILoad addr     
-
--- compileBool compiles compare expressions
-compareBool :: String -> Exp -> Exp -> State Env ()
-compareBool instr e1 e2 = do
-    emit $ Iconst1
-    compileExp e1
-    compileExp e2
-    lTrue <- newLabel
-    case instr of
-        "IfCmLT"    -> emit $ IfCmLT lTrue
-        "IfCmLTEQ"  -> emit $ IfCmLTEQ lTrue
-        "IfCmEQ"    -> emit $ IfCmEQ lTrue
-        "IfCmNEQ"   -> emit $ IfCmNEQ lTrue
-    emit Pop
-    emit Iconst0
-    emit $ Label lTrue
-    -}
+         -}
