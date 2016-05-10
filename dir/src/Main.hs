@@ -27,8 +27,9 @@ main = do
             case check s of
                 Bad err  -> hPutStr stderr ("ERROR\n" ++ err) >> exitFailure
                 Ok  tree -> do
+                    --putStrLn $ (printTree tree) ++ "\n\n"
                     compileCode file tree
-                    hPutStr stderr "OK\n"  >> exitSuccess
+                    hPutStr stderr "OK\n" >> exitSuccess
                     --check file --readFile file >>= check
         _      -> do
             putStrLn "Give Main a file!"

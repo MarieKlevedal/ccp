@@ -9,6 +9,8 @@ import System.Process
 -}
 import Control.Monad.State
 
+import PrintJavalette
+
 import AbsJavalette
 import LLVM
 import CGEnv
@@ -164,17 +166,6 @@ compileStm (SExp e)             = do
         compileStm stm
         emit $ Goto lTest
         emit $ Label lEnd
-    SIfElse exp stm1 stm2 -> do
-        emitComment "*** start of if-else ***"
-        lTrue  <- newLabel
-        lFalse <- newLabel
-        compileExp exp
-        emit $ IfEQ lFalse
-        compileStm stm1
-        emit $ Goto lTrue
-        emit $ Label lFalse
-        compileStm stm2
-        emit $ Label lTrue
 -}
 
 compileItems :: Type -> [Item] -> State Env ()
@@ -196,6 +187,7 @@ defaultValue t jName = case t of
     TDoub -> emit $ Store TDoub "0.0"   jName
     TBool -> emit $ Store TBool "false" jName
 
+----------------------------------------------------------------------------
 
 -- compileExps compiles all expressions
 compileExps :: [Exp] -> State Env [String]
@@ -266,18 +258,40 @@ compileExp (ENot e) = do
     emit $ Br1 lEnd
     emit $ Label lEnd
 -}
-compileExp (EType t (EAdd e1 Plus e2)) = do
+
+{-
+ | EMul Exp MulOp Exp
+ | EAdd Exp AddOp Exp
+ | ERel Exp RelOp Exp
+ | EAnd Exp Exp
+ | EOr Exp Exp
+-}
+compileExp (EType t (EMul e1 op e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
     (Ident res) <- newVar
-    case t of
-        TInt  -> emit $ IAdd res str1 str2
-        TDoub -> emit $ FAdd res str1 str2
+    case (op, t) of
+        (Times, TInt)   -> emit $ IMul res str1 str2
+        (Times, TDoub)  -> emit $ FMul res str1 str2
+        (Div  , TInt)   -> emit $ IDiv res str1 str2
+        (Div  , TDoub)  -> emit $ FDiv res str1 str2
+        (Mod  , TInt)   -> emit $ IMod res str1 str2
+    return res
+
+compileExp (EType t (EAdd e1 op e2)) = do
+    str1        <- compileExp e1
+    str2        <- compileExp e2
+    (Ident res) <- newVar
+    case (op, t) of
+        (Plus, TInt)    -> emit $ IAdd res str1 str2
+        (Plus, TDoub)   -> emit $ FAdd res str1 str2
+        (Minus, TInt)   -> emit $ ISub res str1 str2
+        (Minus, TDoub)  -> emit $ FSub res str1 str2
     return res 
 
 compileExp (EType t e) = compileExp e 
 
-compileExp e = error "exp nyi"
+compileExp e = error $ "exp nyi: " ++ printTree e
 {-
 compileExp exp = case exp of
     ETrue        -> emit $ Iconst1  
@@ -321,23 +335,6 @@ compileExp exp = case exp of
         emit $ ISub
         emit $ Duplicate
         emit $ IStore addr
-        
-    ETimes e1 e2 -> do
-        compileExp e1
-        compileExp e2
-        emit $ IMul
-    EDiv e1 e2   -> do
-        compileExp e1
-        compileExp e2
-        emit $ IDiv
-    EPlus e1 e2  -> do
-        compileExp e1
-        compileExp e2
-        emit $ IAdd
-    EMinus e1 e2 -> do
-        compileExp e1
-        compileExp e2
-        emit $ ISub
         
     ELt e1 e2    -> compareBool "IfCmLT" e1 e2 
     EGt e1 e2    -> compileExp (ELt e2 e1)

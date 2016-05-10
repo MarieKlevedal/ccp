@@ -222,9 +222,9 @@ checkDecl t (item:items) = case item of
 -- error message.
 checkExp :: Type -> Exp -> TypeCheckM Exp
 checkExp t exp = do
-    et@(EType t2 _) <- inferExp exp
+    te@(EType t2 _) <- inferExp exp
     if (t2 == t) 
-        then return et
+        then return te
         else fail $ "Exp " ++ printTree exp ++ " has incorrect type. Expected type: " ++
             printTree t ++ ". Actual type: " ++ printTree t2
 
@@ -253,9 +253,9 @@ inferExp exp = case exp of
             return $ EType retT (EApp id tes)
     
     ENeg e          -> do
-        (EType t _) <- inferExp e
+        te@(EType t _) <- inferExp e
         case elem t [TInt, TDoub] of
-            True -> return $ EType t (ENeg (EType t e))
+            True -> return $ EType t (ENeg te)
             _    -> fail $ "Incorrect type of expression " ++ printTree e
     ENot e          -> do
         te <- checkExp TBool e
@@ -267,27 +267,27 @@ inferExp exp = case exp of
         return $ EType TInt (EMul te1 Mod te2)
     
     EMul e1 op e2   -> do
-        (EType t _) <- inferExp e1          
+        te1@(EType t _) <- inferExp e1
         case elem t [TInt, TDoub] of
             True -> do
-                checkExp t e2
-                return $ EType t (EMul (EType t e1) op (EType t e2))
-            _    -> fail $ "Incorrect type of expression " ++ printTree e1 
+                te2 <- checkExp t e2
+                return $ EType t (EMul te1 op te2)
+            _    -> fail $ "Incorrect type of expression " ++ printTree e1
     
     EAdd e1 op e2   -> do
-        (EType t _) <- inferExp e1
+        te1@(EType t _) <- inferExp e1
         case elem t [TInt, TDoub] of
             True -> do
-                checkExp t e2
-                return $ EType t (EAdd (EType t e1) op (EType t e2))
+                te2 <- checkExp t e2
+                return $ EType t (EAdd te1 op te2)
             _    -> fail $ "Incorrect type of expression " ++ printTree e1 
     
     ERel e1 op e2   -> do
-        (EType t _) <- inferExp e1
+        te1@(EType t _) <- inferExp e1
         case elem t [TInt, TDoub, TBool] of
             True -> do
-                checkExp t e2
-                return $ EType TBool (ERel (EType t e1) op (EType t e2))
+                te2 <- checkExp t e2
+                return $ EType TBool (ERel te1 op te2)
             _    -> fail $ "Incorrect type of expression " ++ printTree e1 
             
     EAnd e1 e2      -> do

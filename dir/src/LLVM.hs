@@ -17,8 +17,16 @@ data Instruction =
     | Store Type String String
     | Load String Type String
     | Return Type String
+    
+    | IMul String String String
+    | FMul String String String
+    | IDiv String String String
+    | FDiv String String String
+    | IMod String String String
     | IAdd String String String
     | FAdd String String String
+    | ISub String String String
+    | FSub String String String
 
 
 instance Show Instruction where
@@ -39,10 +47,20 @@ instance Show Instruction where
     show (Store t lId jId)        = "store " ++ (toLType t) ++ " " ++ lId ++ 
                                     " , " ++ (toLType t) ++ "* " ++ jId
     show (Load lId t jId)         = lId ++ " = load " ++ (toLType t) ++ "* " ++ jId
-    show (Return t s)             = "ret " ++ (toLType t) ++ " " ++ s         
+    show (Return t s)             = "ret " ++ (toLType t) ++ " " ++ s    
+    
+    -- MulOps
+    show (IMul res id1 id2)       = res ++ " = mul i32 " ++ id1 ++ " , " ++ id2     
+    show (FMul res id1 id2)       = res ++ " = fmul double " ++ id1 ++ " , " ++ id2
+    show (IDiv res id1 id2)       = res ++ " = sdiv i32 " ++ id1 ++ " , " ++ id2     
+    show (FDiv res id1 id2)       = res ++ " = fdiv double " ++ id1 ++ " , " ++ id2
+    show (IMod res id1 id2)       = res ++ " = srem i32 " ++ id1 ++ " , " ++ id2
+    
+    -- AddOps
     show (IAdd res id1 id2)       = res ++ " = add i32 " ++ id1 ++ " , " ++ id2
     show (FAdd res id1 id2)       = res ++ " = fadd double " ++ id1 ++ " , " ++ id2
-
+    show (ISub res id1 id2)       = res ++ " = sub i32 " ++ id1 ++ " , " ++ id2
+    show (FSub res id1 id2)       = res ++ " = fsub double " ++ id1 ++ " , " ++ id2
 
 -- toLType converts Javalette types to LLVM types
 toLType :: Type -> String
