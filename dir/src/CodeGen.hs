@@ -124,20 +124,37 @@ compileStms (s:ss) = do
 -- compileStm compiles a single statement
 compileStm :: Stm -> State Env ()
 compileStm  SEmpty              = return ()
+
 compileStm (SBlock (DBlock ss)) = compileStms ss
+
 compileStm (SDecl t items)      = compileItems t items
+
 compileStm (SAss (Ident str) e@(EType t _)) = do
     res <- compileExp e
     emit $ Store t res str
+
 compileStm (SIncr jId)          = compileStm $ SAss jId $ EType TInt $ 
                                     EAdd (EType TInt (EVar jId)) Plus (ELit (LInt 1)) 
+
 compileStm (SDecr jId)          = compileStm $ SAss jId $ EType TInt $ 
                                     EAdd (EType TInt (EVar jId)) Minus (ELit (LInt 1)) 
+
 compileStm (SRet e@(EType t _)) = do
     ret <- compileExp e
     emit $ Return t ret
-compileStm  SVRet               = error "SVRet nyi"
-compileStm (SIf e s)            = error "SIf nyi"
+
+compileStm  SVRet               = emit VReturn
+
+compileStm (SIf e s)            = do
+    lTrue  <- newLabel
+    lEnd   <- newLabel
+    str    <- compileExp e
+    emit $ Br2 str lTrue lEnd
+    emit $ Label lTrue
+    compileStm s
+    emit $ Br1 lEnd
+    emit $ Label lEnd
+
 compileStm (SIfElse e s1 s2)    = do
     lTrue  <- newLabel
     lFalse <- newLabel
@@ -151,8 +168,7 @@ compileStm (SIfElse e s1 s2)    = do
     compileStm s2
     emit $ Br1 lEnd
     emit $ Label lEnd
-    
-    
+        
 compileStm (SWhile e s)         = error "SWhile nyi"
 compileStm (SExp e)             = do
     compileExp e

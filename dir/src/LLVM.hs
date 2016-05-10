@@ -17,6 +17,7 @@ data Instruction =
     | Store Type String String
     | Load String Type String
     | Return Type String
+    | VReturn
     
     | IMul String String String
     | FMul String String String
@@ -51,6 +52,7 @@ instance Show Instruction where
                                     " , " ++ (toLType t) ++ "* " ++ jId
     show (Load lId t jId)         = lId ++ " = load " ++ (toLType t) ++ "* " ++ jId
     show (Return t s)             = "ret " ++ (toLType t) ++ " " ++ s    
+    show  VReturn                 = "ret void"
     
     -- MulOps
     show (IMul res id1 id2)       = res ++ " = mul i32 " ++ id1 ++ " , " ++ id2     
