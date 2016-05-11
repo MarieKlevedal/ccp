@@ -2,7 +2,7 @@
 cd src
 make
 cd ..
-./jlc test.jl
+./jlc #test.jl
 
 # ./jlc tester/testsuite/good/core001.jl
 # ./jlc tester/testsuite/good/core002.jl

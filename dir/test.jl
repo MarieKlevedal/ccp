@@ -1,9 +1,13 @@
 int main(){
-    printString("hellooo");
-    printString("world");
-    printInt(3+5);
-    printDouble(3.5);
-    int x = readInt();
-    double y = readDouble();
+    return ifac(1);
+}
+
+int ifac(int n){
+    //return ifac2f(1,n);
+    int x = ifac2f(1,2);
     return x;
+}
+
+int ifac2f(int l, int h){
+    return 1;
 }

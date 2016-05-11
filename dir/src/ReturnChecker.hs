@@ -53,7 +53,7 @@ checkStms (s:ss) = case s of
             checkStms (s1:ss)
             checkStms (s2:ss)
     SWhile  e s1        -> case e of
-        EType TBool (ELit LTrue)  -> checkStms (s1:ss)
+        EType TBool (ELit LTrue)  -> checkStms [s1] -- modified from (s1:ss)
         _                         -> checkStms ss
     SBlock (DBlock ss1) -> checkStms (ss1 ++ ss)
     _                   -> checkStms ss

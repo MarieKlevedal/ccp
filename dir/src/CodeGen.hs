@@ -66,11 +66,12 @@ convertFuncArgs ((DArg t id):as) = do
 
 
 emitFuncArgs :: [Arg] -> State Env ()
-emitFuncArgs []                 = return ()
-emitFuncArgs (a@(DArg t id@(Ident s)):as) = do
-    emit $ Alloca t s
-    (Ident s2) <- lookupVar id
-    emit $ Store t s2 s
+emitFuncArgs []                         = return ()
+emitFuncArgs ((DArg t id@(Ident jId)):as) = do
+    emit $ Alloca t jId
+    (Ident lId) <- lookupVar id
+    emit $ Store t lId jId
+    
     emitFuncArgs as
 
 --------------------------- ***************** -------------------------
@@ -106,7 +107,9 @@ compileDef (FnDef rt id@(Ident str) args (DBlock ss)) = do
     emit $ Label "entry"
     emitFuncArgs args
     
-    compileStms ss
+    case length ss of
+        0   -> emit VReturn
+        _   -> compileStms ss
     
     emitBlank
     emitText "}"   
@@ -117,7 +120,9 @@ compileStms []     = return ()
 compileStms (s:ss) = do
     compileStm s
     case (ss, s) of
+        ([], SIf     _ _  ) -> emitText $ "unreachable"
         ([], SIfElse _ _ _) -> emitText $ "unreachable"
+        ([], SWhile  _ _  ) -> emitText $ "unreachable"
         _                   -> compileStms ss
 
 
@@ -223,9 +228,10 @@ compileExps (e:es) = do
 -- compileExp compiles an expression with pattern matching
 compileExp :: Exp -> State Env String
 compileExp (EType t (EVar id@(Ident jId))) = do
-    (Ident lId) <- lookupVar id
+    --(Ident lId) <- lookupVar id
+    (Ident lId) <- extendVar id
     emit $ Load lId t jId
-    extendVar id
+    --extendVar id
     return lId
     
 compileExp (ELit l) = case l of
@@ -261,8 +267,9 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
-compileExp (EType t (ENeg e)) = compileExp $ EType t $ EAdd (ELit $ LInt 0) Minus e
-
+compileExp (EType t (ENeg e)) = case t of
+    TInt    -> compileExp $ EType t $ EAdd (ELit $ LInt 0) Minus e
+    TDoub   -> compileExp $ EType t $ EAdd (ELit $ LDoub 0.0) Minus e
 
 compileExp (ENot e) = do  
     str          <- compileExp e
@@ -303,6 +310,7 @@ compileExp (ERel e1@(EType t _) op e2) = do
     case t of
         TInt    -> emit $ ICmp res op str1 str2
         TDoub   -> emit $ FCmp res op str1 str2
+        TBool   -> emit $ BCmp res op str1 str2
     return res
 
 compileExp (EAnd e1 e2) = do

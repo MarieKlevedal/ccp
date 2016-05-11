@@ -29,6 +29,7 @@ data Instruction =
     | ISub String String String
     | FSub String String String
     
+    | BCmp String RelOp String String
     | ICmp String RelOp String String
     | FCmp String RelOp String String
     
@@ -70,6 +71,8 @@ instance Show Instruction where
     show (ISub res id1 id2)       = res ++ " = sub i32 " ++ id1 ++ " , " ++ id2
     show (FSub res id1 id2)       = res ++ " = fsub double " ++ id1 ++ " , " ++ id2
 
+    show (BCmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i1 " ++
+                                    id1 ++ ", " ++ id2
     show (ICmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i32 " ++
                                     id1 ++ ", " ++ id2
     show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
@@ -90,7 +93,7 @@ toLType t = case t of
 showArgs :: [(Type, String)] -> String
 showArgs []            = ""
 showArgs [(t, s)]      = (toLType t) ++ " " ++ s
-showArgs ((t, s):args) = (toLType t) ++ " " ++ s ++ ", "
+showArgs ((t, s):args) = (toLType t) ++ " " ++ s ++ ", " ++ showArgs args
 
 showIRelOp :: RelOp -> String
 showIRelOp Lt   = "slt"
