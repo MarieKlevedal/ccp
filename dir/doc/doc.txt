@@ -1,9 +1,9 @@
-Compiler for Javalette, part A, version 1
+Compiler for Javalette, part B, version 1
 -----------------------------------------
 
 Build the compiler by running the command
     make
-in the src/ directory. This compiles the files TypeChecker.hs, ReturnChecker.hs and Main.hs. Remove generated files by running the command
+in the src/ directory. Remove generated files by running the command
     clean
 in the same directory.
 

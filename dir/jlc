@@ -3,10 +3,10 @@
 rm test.ll
 #rm a.out
 
-exec ./src/Main "$@" | llvm-as test.ll  # 
+exec ./src/Main "$@" | llvm-as test.ll        # call Main and then compile test.ll
 
-#llvm-link test.bc ./lib/runtime.bc -o main.bc # link with runtime to create main.bc
-#llc -filetype=obj main.bc   # create .o file
-#gcc main.o  # produce executable file a.out
+llvm-link test.bc ./lib/runtime.bc -o main.bc # link with runtime to create main.bc
+llc -filetype=obj main.bc                     # create .o file
+gcc main.o                                    # produce executable file a.out
 
-#xdg-open "test.ll"&
+cat test.ll
