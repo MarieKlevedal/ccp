@@ -9,8 +9,9 @@ Kom ihåg
 TODO
 ----
 ¤ Skriv kommentarer i alla nya filer.
-
-¤ Skriv om EAnd och EOr?
+¤ Skriv om Main så den blir snyggare. Kan göra så att check returnerar IO () eller
+  använda en monad.
+¤ Skriv om EAnd och EOr
 ¤ Skriv om alpharen med statemonad?
 ¤ ENot kan modelleras genom att returnera e == false (med icmp). Gör en ny 
   instruction (BCmp) så slipper vi mod:a hårdkodandet i ICmp. Gör det?
@@ -20,28 +21,52 @@ Frågor
 ------
 ¤ Hur sparar vi namnet på testfilen i jlc? Vi behöver det sedan för att 
   kompillera llvm-filen, länka dem osv.
+  A: Gör det från Haskell istället, m h a System.Process
   
 ¤ Ska .bc, main.bc, main.o och a.out hamna i samma mapp som testfilerna
   (/graderTestSuite/good)? Hur säger vi till gcc att lägga a.out där isf?
+  A: Bara .ll oc .bc i den mappen
   
 ¤ Vi får en konstig #test.ll#-fil med nuvarande jlc.
-  
+  A: Känner inte igen, men gör nog inget
   
 ¤ Behöver vi ha med \0A i de globala strängarna? Vad är den till för? llvm-as
   klagar om vi har med den och har längd +2
+  A: det är newline, behöver inte ha med den
   
 ¤ Testfilen core026: Är den verkligen ok? Den avslutas ju inte med en return.
   Är det för att den har en while-true (och det inte finns ngt break i språket)
   och den aldrig kommer lämna loopen som vi inte bryr oss om det?
+  A: den är bra, använd unreachable efter while-true (kan göra det i compileStms)
   
-¤ Är det ok att använda LLVMs funktioner and, or och xor (är de lazy?)
-  eller får vi bara använda de funktioner som finns på listan från lec3?
-        Basic JavaLette will only need the following instructions:
+¤ Är det ok att använda LLVMs funktioner and och or (är de lazy?) eller får vi 
+  bara använda de funktioner som finns på listan från lec3?
+        "Basic JavaLette will only need the following instructions:
             • Terminator instructions: ret and br
             • Arithmetic operations:
                 • For integers add, sub, mul, sdiv and srem
                 • For doubles fadd, fsub, fmul and fdiv
             • Memory access: alloca, load, getelementptr and store
             • Other: icmp, fcmp and call
-        Some of the extensions will need more instructions.
+        Some of the extensions will need more instructions."
+  A: De är nog inte lazy, så ite ok. Vi an lösa det antingen genom att codegen:a 
+     booleanska uttryck separat eller att göra som nedan men generera först 
+     minne för ny variabel på stacken och sätt den till olika värden i de olika
+     brancherna.
   
+  Idé till lazy AND:
+      compileExp(EAnd e1 e2) = do
+        vE1 <- compileExp e1
+        emit $ Br2 vE1 lTrue lFalse
+        lTrue:
+            vE2 <- compileExp e2
+            (return vE2)
+            emit $ Br1 lEnd
+        lFalse:
+            (return "false")
+            emit $ Br1 lEnd
+        lEnd:
+    Hur kan vi komma runt att ha två return?
+    
+    
+    
