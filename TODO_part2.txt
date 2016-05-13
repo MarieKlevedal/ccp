@@ -1,27 +1,31 @@
-Tips
-----
-¤ Lec notes 4 har bra tips och kodexempel
-
 Kom ihåg
 --------
 ¤ Lazy && and ||
 
 TODO
 ----
-¤ Skriv kommentarer i alla nya filer.
+¤ Flytta över ansvaret i jlc till Main, använd System.Process. Behåll dock filen
+  jlc och pipe:a anropet från testsuiten genom den till Main. Ha eventuellt
+  kompilleringen av main.o och genererandet av a.ou i jlc.
+¤ Få testsuiten att köra.
 ¤ Skriv om Main så den blir snyggare. Kan göra så att check returnerar IO () eller
   använda en monad.
-¤ Skriv om EAnd och EOr
-¤ Skriv om alpharen med statemonad?
-¤ ENot kan modelleras genom att returnera e == false (med icmp). Gör en ny 
-  instruction (BCmp) så slipper vi mod:a hårdkodandet i ICmp. Gör det?
+¤ Fixa compileStms så den genererar ett unreachable i core026.
+¤ Skriv om EAnd och EOr, se nedan för tips.
+¤ Skriv om ENot: kan modelleras genom att returnera e == false (med icmp). 
+  Använd BCmp-instruktionen.
 ¤ Ha med runtime.bc (obs: den kompillerade filen) i tar-bollen. Inte runtime.ll?
+  
+¤ Skriv kommentarer i alla nya filer.
+¤ Skriv om alpharen med statemonad?
+
 
 Frågor
 ------
 ¤ Hur sparar vi namnet på testfilen i jlc? Vi behöver det sedan för att 
   kompillera llvm-filen, länka dem osv.
   A: Gör det från Haskell istället, m h a System.Process
+     $@ plockar ut första argumentet i anropet.
   
 ¤ Ska .bc, main.bc, main.o och a.out hamna i samma mapp som testfilerna
   (/graderTestSuite/good)? Hur säger vi till gcc att lägga a.out där isf?
