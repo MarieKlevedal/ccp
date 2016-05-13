@@ -4,18 +4,39 @@ Kom ihåg
 
 TODO
 ----
-¤ Flytta över ansvaret i jlc till Main, använd System.Process. Behåll dock filen
-  jlc och pipe:a anropet från testsuiten genom den till Main. Ha eventuellt
-  kompilleringen av main.o och genererandet av a.ou i jlc.
+¤ Flytta över ansvaret i jlc till Main, använd System.Process (funktionen
+  callCommand :: String -> IO() verkar användbar). 
+  Exempel i Windows:
+    import System.Process
+    main :: IO ()
+    main = do
+        callCommand "echo \"hej\""
+        callCommand "echo \"hallo\""
+        callCommand "echo \"hi\""
+  Ide: Behåll dock filen jlc och pipe:a anropet från testsuiten genom den till 
+  Main som  partA. Ha eventuellt   kompilleringen av main.o och genererandet av 
+  a.out i jlc.
+  
 ¤ Få testsuiten att köra.
+
 ¤ Skriv om Main så den blir snyggare. Kan göra så att check returnerar IO () eller
   använda en monad.
+  
 ¤ Fixa compileStms så den genererar ett unreachable i core026.
+  Ide: Skriv unreachable även om det inte är sista stm:et för while-true. 
+       Returnera sedan utan att göra rekursivt anrop?
+  case (ss, s) of
+    (_, (SWhile (EType TBool (ELit (LBool "true"))) _)) -> emitText "unreachable"
+
 ¤ Skriv om EAnd och EOr, se nedan för tips.
+
 ¤ Skriv om ENot: kan modelleras genom att returnera e == false (med icmp). 
   Använd BCmp-instruktionen.
-¤ Ha med runtime.bc (obs: den kompillerade filen) i tar-bollen. Inte runtime.ll?
   
+¤ Ha med runtime.bc (obs: den kompillerade filen) i tar-bollen. Inte runtime.ll?
+
+TODO lägre prio
+---------------
 ¤ Skriv kommentarer i alla nya filer.
 ¤ Skriv om alpharen med statemonad?
 
@@ -29,7 +50,7 @@ Frågor
   
 ¤ Ska .bc, main.bc, main.o och a.out hamna i samma mapp som testfilerna
   (/graderTestSuite/good)? Hur säger vi till gcc att lägga a.out där isf?
-  A: Bara .ll oc .bc i den mappen
+  A: Bara .ll oc .bc i den mappen, resten hos jlc
   
 ¤ Vi får en konstig #test.ll#-fil med nuvarande jlc.
   A: Känner inte igen, men gör nog inget
@@ -41,7 +62,7 @@ Frågor
 ¤ Testfilen core026: Är den verkligen ok? Den avslutas ju inte med en return.
   Är det för att den har en while-true (och det inte finns ngt break i språket)
   och den aldrig kommer lämna loopen som vi inte bryr oss om det?
-  A: den är bra, använd unreachable efter while-true (kan göra det i compileStms)
+  A: den är bra, använd unreachable efter while-true
   
 ¤ Är det ok att använda LLVMs funktioner and och or (är de lazy?) eller får vi 
   bara använda de funktioner som finns på listan från lec3?
