@@ -2,7 +2,10 @@
 cd src
 make
 cd ..
-./jlc #test.jl
+rm main.bc
+rm main.o
+rm a.out
+./jlc tester/testsuite/good/core026.jl
 
 # ./jlc tester/testsuite/good/core001.jl
 # ./jlc tester/testsuite/good/core002.jl

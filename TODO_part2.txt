@@ -21,12 +21,6 @@ TODO
 
 ¤ Skriv om Main så den blir snyggare. Kan göra så att check returnerar IO () eller
   använda en monad.
-  
-¤ Fixa compileStms så den genererar ett unreachable i core026.
-  Ide: Skriv unreachable även om det inte är sista stm:et för while-true. 
-       Returnera sedan utan att göra rekursivt anrop?
-  case (ss, s) of
-    (_, (SWhile (EType TBool (ELit (LBool "true"))) _)) -> emitText "unreachable"
 
 ¤ Skriv om EAnd och EOr, se nedan för tips.
 

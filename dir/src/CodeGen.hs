@@ -1,12 +1,5 @@
 module CodeGen where
 
-{-
-import System.IO
-import System.FilePath.Posix
-import System.Environment
-import System.Exit
-import System.Process
--}
 import Control.Monad.State
 
 import PrintJavalette
@@ -26,11 +19,6 @@ codeGen prg = unlines (Prelude.map show (reverse (llvmCode ++ headerCode))) wher
     env        = compileProg prg `execState` startEnv
     headerCode = header $ env
     llvmCode   = code $ env
-{-
-codeGen filename prg = unlines (Prelude.map instrToStr jcode)
-    where
-        jcode  = reverse $ code $ compileProg prg `execState` (emptyEnv filename)
--}
 
 -- emit takes an instruction and adds it at beginning of the code in the env
 emit :: Instruction -> State Env ()
@@ -38,12 +26,6 @@ emit i = modify (\env -> env{code = i: code env})
 
 emitHeader :: Instruction -> State Env ()
 emitHeader i = modify (\env -> env{header = i: header env})
-
-{-
--- emitComment emits a jasmin comment
-emitComment :: String -> State Env ()
-emitComment str = emit $ Comment str
--}
 
 -- emitBlank emits a blank row
 emitBlank :: State Env ()
@@ -120,9 +102,10 @@ compileStms []     = return ()
 compileStms (s:ss) = do
     compileStm s
     case (ss, s) of
-        ([], SIf     _ _  ) -> emitText $ "unreachable"
-        ([], SIfElse _ _ _) -> emitText $ "unreachable"
-        ([], SWhile  _ _  ) -> emitText $ "unreachable"
+        ([], SIf     _ _  )                       -> emitText "unreachable"
+        ([], SIfElse _ _ _)                       -> emitText "unreachable"
+        ([], SWhile  _ _  )                       -> emitText "unreachable"
+        (_ , SWhile (EType TBool (ELit LTrue)) _) -> emitText "unreachable"
         _                   -> compileStms ss
 
 

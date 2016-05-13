@@ -1,28 +1,3 @@
 #!/bin/bash
-DIR=./graderTestSuite/good
-FILE=core026
-
-#DIR=.
-#FILE=test
-
-NAME=$DIR/$FILE
-
-rm $NAME.ll
-rm $NAME.bc
-rm $DIR/main.*
-rm $DIR/a.out
-
-#exec ./src/Main "$@" | llvm-as test.ll        # call Main and then compile test.ll
-./src/Main $NAME.jl
-llvm-as $NAME.ll
-
-
-#llvm-link $NAME.bc ./lib/runtime.bc -o $DIR/main.bc # link with runtime to create main.bc
-#llc -filetype=obj $DIR/main.bc                     # create .o file
-
-#cd $DIR
-#gcc $DIR/main.o                                    # produce executable file a.out
-#cd ~/CC/ccp/dir
-
-#cat $NAME.ll
+exec ./src/Main "$@"
 
