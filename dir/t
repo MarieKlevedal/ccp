@@ -5,35 +5,15 @@ cd ..
 rm main.bc
 rm main.o
 rm a.out
-./jlc tester/testsuite/good/core026.jl
 
-# ./jlc tester/testsuite/good/core001.jl
-# ./jlc tester/testsuite/good/core002.jl
-# ./jlc tester/testsuite/good/core003.jl
-# ./jlc tester/testsuite/good/core004.jl
-# ./jlc tester/testsuite/good/core005.jl
-# ./jlc tester/testsuite/good/core006.jl
-# ./jlc tester/testsuite/good/core007.jl
-# ./jlc tester/testsuite/good/core008.jl
-# ./jlc tester/testsuite/good/core009.jl
-# ./jlc tester/testsuite/good/core010.jl
-# ./jlc tester/testsuite/good/core011.jl
-# ./jlc tester/testsuite/good/core012.jl
-# ./jlc tester/testsuite/good/core013.jl
-# ./jlc tester/testsuite/good/core014.jl
-# ./jlc tester/testsuite/good/core015.jl
-# ./jlc tester/testsuite/good/core016.jl
-# ./jlc tester/testsuite/good/core017.jl
-# ./jlc tester/testsuite/good/core018.jl
-# ./jlc tester/testsuite/good/core019.jl
-# ./jlc tester/testsuite/good/core020.jl
-# ./jlc tester/testsuite/good/core021.jl
-# ./jlc tester/testsuite/good/core022.jl
-# ./jlc tester/testsuite/good/core023.jl
-# ./jlc tester/testsuite/good/core024.jl
-# ./jlc tester/testsuite/good/core025.jl
-# ./jlc tester/testsuite/good/core026.jl
-# ./jlc tester/testsuite/good/core027.jl
-# ./jlc tester/testsuite/good/core028.jl
-# ./jlc tester/testsuite/good/core029.jl
-# ./jlc tester/testsuite/good/core030.jl
+#./jlc test.jl
+
+./jlc tester/testsuite/good/core030.jl
+llvm-as tester/testsuite/good/core030.ll
+llvm-link tester/testsuite/good/core030.bc lib/runtime.bc -o main.bc
+llc -filetype=obj main.bc
+gcc main.o
+./a.out
+echo ""
+cat tester/testsuite/good/core030.output
+echo "----------------------------------------"

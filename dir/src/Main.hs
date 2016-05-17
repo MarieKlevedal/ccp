@@ -35,7 +35,6 @@ check file = do
     case check' s of
         Bad err  -> hPutStr stderr ("ERROR\n" ++ err) >> exitFailure
         Ok  tree -> do
-            --putStrLn $ (printTree tree) ++ "\n\n"
             compileCode file tree
             hPutStr stderr "OK\n" >> exitSuccess
 
@@ -54,7 +53,7 @@ compileCode file prog = do
     let llFile = replaceExtension file "ll" -- creates ll file and path to it
     writeFile llFile code                   -- put compiled code in ll file
     
-    runCommand $ "llvm-as " ++ llFile 
+    --runCommand $ "llvm-as " ++ llFile 
     --let bcFile = (dropExtension file) ++ ".bc"
     --runCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc" 
     --runCommand "llc -filetype=obj main.bc"

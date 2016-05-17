@@ -4,7 +4,6 @@ import AbsJavalette
 
 
 data Instruction =
-    --Comment String     |
       Text  String
     | GlobStr String Int String
     | GetElemPtr String Int String
@@ -32,10 +31,6 @@ data Instruction =
     | BCmp String RelOp String String
     | ICmp String RelOp String String
     | FCmp String RelOp String String
-    
-    | And String String String
-    | Or String String String
-    | Xor String String String
 
 instance Show Instruction where
     show (Text s)                 = s
@@ -71,15 +66,13 @@ instance Show Instruction where
     show (ISub res id1 id2)       = res ++ " = sub i32 " ++ id1 ++ " , " ++ id2
     show (FSub res id1 id2)       = res ++ " = fsub double " ++ id1 ++ " , " ++ id2
 
+    -- RelOps
     show (BCmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i1 " ++
                                     id1 ++ ", " ++ id2
     show (ICmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i32 " ++
                                     id1 ++ ", " ++ id2
     show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
                                     id1 ++ ", " ++ id2
-    show (And res id1 id2)        = res ++ " = and i1 " ++ id1 ++ ", " ++ id2
-    show (Or res id1 id2)         = res ++ " = or i1 " ++ id1 ++ ", " ++ id2
-    show (Xor res id1 id2)        = res ++ " = xor i1 " ++ id1 ++ ", " ++ id2
 
 -- toLType converts Javalette types to LLVM types
 toLType :: Type -> String

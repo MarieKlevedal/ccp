@@ -1,7 +1,3 @@
-Kom ihåg
---------
-¤ Lazy && and ||
-
 TODO
 ----
 ¤ Flytta över ansvaret i jlc till Main, använd System.Process (funktionen
@@ -22,12 +18,6 @@ TODO
 ¤ Skriv om Main så den blir snyggare. Kan göra så att check returnerar IO () eller
   använda en monad.
 
-¤ Skriv om EAnd och EOr, se nedan för tips.
-
-¤ Skriv om ENot: kan modelleras genom att returnera e == false (med icmp). 
-  Använd BCmp-instruktionen.
-  
-¤ Ha med runtime.bc (obs: den kompillerade filen) i tar-bollen. Inte runtime.ll?
 
 TODO lägre prio
 ---------------

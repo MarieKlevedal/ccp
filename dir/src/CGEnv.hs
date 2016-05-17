@@ -9,7 +9,6 @@ import LLVM
 
 
 data Env = Env {
-    --filename        :: String,               -- the name of the current testfile
     vars         :: M.Map Ident Ident,    -- map of id1 (in Javalette) + id2 
                                           -- that points at id1
     funcs        :: M.Map Ident Type,     -- map of function id + function type
@@ -74,9 +73,8 @@ extendFun id t = do
     modify (\env -> env{funcs = M.insert id t (funcs env)})
 
 -- startEnv creates an empty environment with default values 
-startEnv :: {-String ->-} Env
-startEnv {-fname-} = Env{
-    --filename        = fname,
+startEnv :: Env
+startEnv = Env{
     vars            = M.empty,
     funcs           = 
          M.insert (Ident "printInt")    (TFun TVoid [TInt])  $
