@@ -158,7 +158,16 @@ checkStm rt stm = case stm of
         t <- lookVar id
         te <- checkExp t exp
         return (SAss id te)
-        
+    
+    -- SArrAss id e1 e2 -> -- id[e1] = e2                   -- TODO
+
+    SNewArrAss id t exp  -> do -- id = new t[exp]
+        (TArr t2) <- lookVar id
+        etype <- checkExp TInt exp
+        if t == t2
+        then return $ SNewArrAss id t etype
+        else error $ "array " ++ (printTree id) ++ " of incorrect type"
+    
     SIncr id              -> do
         t <- lookVar id
         case t of
@@ -194,6 +203,8 @@ checkStm rt stm = case stm of
         stm1' <- checkStm rt stm1
         return (SWhile te stm1')
         
+    -- SForEach                                                    -- TODO
+        
     SExp exp -> do
         te <- inferExp exp
         return (SExp te)
@@ -214,6 +225,16 @@ checkDecl t (item:items) = case item of
         extendVar id t
         items' <- checkDecl t items
         return ((IInit id etype):items')
+    (IArrInit id t2 exp) -> let (TArr t') = t in
+        if t2 == t'
+        then do
+            etype <- checkExp TInt exp
+            extendVar id t
+            items' <- checkDecl t items
+            return ((IArrInit id t2 etype):items')
+        else
+            error $ "array " ++ (printTree id) ++ " of incorrect type"
+                
 
 ----------------------- checkExp and its auxilary functions -----------------------
 
@@ -251,6 +272,9 @@ inferExp exp = case exp of
             (TFun retT argTs) <- lookFuncSig id
             tes <- checkArgTypes argTs exps
             return $ EType retT (EApp id tes)
+    
+    -- EArrLen.         Exp6    ::= Ident "." "length" ;            -- TODO
+    -- EArrInd.         Exp6    ::= Ident "[" Exp "]" ;             -- TODO
     
     ENeg e          -> do
         te@(EType t _) <- inferExp e

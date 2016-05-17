@@ -1,5 +1,5 @@
 int main(){
-    boolean b = !(5<0);
+    int[] xs = new int[10];
     return 1;
 }
 
