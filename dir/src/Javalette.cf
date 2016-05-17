@@ -19,6 +19,8 @@ SEmpty.          Stm     ::= ";" ;
 SBlock.          Stm     ::= Block ;
 SDecl.           Stm     ::= Type [Item] ";" ;
 SAss.            Stm     ::= Ident "=" Exp  ";" ;
+SArrAss.         Stm     ::= Ident "[" Exp "]" "=" Exp ";" ;
+SNewArrAss.      Stm     ::= Ident "=" "new" Type "[" Exp "]" ";" ;
 SIncr.           Stm     ::= Ident "++"  ";" ;
 SDecr.           Stm     ::= Ident "--"  ";" ;
 SRet.            Stm     ::= "return" Exp ";" ;
@@ -26,28 +28,34 @@ SVRet.           Stm     ::= "return" ";" ;
 SIf.             Stm     ::= "if" "(" Exp ")" Stm  ;
 SIfElse.         Stm     ::= "if" "(" Exp ")" Stm "else" Stm ;
 SWhile.          Stm     ::= "while" "(" Exp ")" Stm ;
+SForEach.        Stm     ::= "for" "(" Type Ident ":" Exp ")" Stm ;
 SExp.            Stm     ::= Exp  ";" ;
 
 IDecl.           Item    ::= Ident ; 
 IInit.           Item    ::= Ident "=" Exp ;
+IArrInit.        Item    ::= Ident "=" "new" Type "[" Exp "]" ;
 separator nonempty Item "," ;
 
 -------------------------- Types ------------------------------
 
-TInt.            Type    ::= "int" ;
-TDoub.           Type    ::= "double" ;
-TBool.           Type    ::= "boolean" ;
-TVoid.           Type    ::= "void" ;
+TInt.            Type1   ::= "int" ;
+TDoub.           Type1   ::= "double" ;
+TBool.           Type1   ::= "boolean" ;
+TVoid.           Type1   ::= "void" ;
+TArr.            Type    ::= Type1 "[]" ;
 
 internal TStr.   Type    ::= "String" ; 
 internal TFun.   Type    ::= Type "(" [Type] ")" ;
 separator Type "," ;
+coercions Type 1 ;
 
 ------------------------ Expessions ---------------------------
 
 EVar.            Exp6    ::= Ident ;
 ELit.            Exp6    ::= Lit ;
 EApp.            Exp6    ::= Ident "(" [Exp] ")" ;
+EArrLen.         Exp6    ::= Ident "." "length" ;
+EArrInd.         Exp6    ::= Ident "[" Exp "]" ;
 ENeg.            Exp5    ::= "-" Exp6 ;
 ENot.            Exp5    ::= "!" Exp6 ;
 EMul.            Exp4    ::= Exp4 MulOp Exp5 ;

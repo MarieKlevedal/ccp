@@ -27,28 +27,36 @@ import ErrM
   ',' { PT _ (TS _ 10) }
   '-' { PT _ (TS _ 11) }
   '--' { PT _ (TS _ 12) }
-  '/' { PT _ (TS _ 13) }
-  ';' { PT _ (TS _ 14) }
-  '<' { PT _ (TS _ 15) }
-  '<=' { PT _ (TS _ 16) }
-  '=' { PT _ (TS _ 17) }
-  '==' { PT _ (TS _ 18) }
-  '>' { PT _ (TS _ 19) }
-  '>=' { PT _ (TS _ 20) }
-  'String' { PT _ (TS _ 21) }
-  'boolean' { PT _ (TS _ 22) }
-  'double' { PT _ (TS _ 23) }
-  'else' { PT _ (TS _ 24) }
-  'false' { PT _ (TS _ 25) }
-  'if' { PT _ (TS _ 26) }
-  'int' { PT _ (TS _ 27) }
-  'return' { PT _ (TS _ 28) }
-  'true' { PT _ (TS _ 29) }
-  'void' { PT _ (TS _ 30) }
-  'while' { PT _ (TS _ 31) }
-  '{' { PT _ (TS _ 32) }
-  '||' { PT _ (TS _ 33) }
-  '}' { PT _ (TS _ 34) }
+  '.' { PT _ (TS _ 13) }
+  '/' { PT _ (TS _ 14) }
+  ':' { PT _ (TS _ 15) }
+  ';' { PT _ (TS _ 16) }
+  '<' { PT _ (TS _ 17) }
+  '<=' { PT _ (TS _ 18) }
+  '=' { PT _ (TS _ 19) }
+  '==' { PT _ (TS _ 20) }
+  '>' { PT _ (TS _ 21) }
+  '>=' { PT _ (TS _ 22) }
+  'String' { PT _ (TS _ 23) }
+  '[' { PT _ (TS _ 24) }
+  '[]' { PT _ (TS _ 25) }
+  ']' { PT _ (TS _ 26) }
+  'boolean' { PT _ (TS _ 27) }
+  'double' { PT _ (TS _ 28) }
+  'else' { PT _ (TS _ 29) }
+  'false' { PT _ (TS _ 30) }
+  'for' { PT _ (TS _ 31) }
+  'if' { PT _ (TS _ 32) }
+  'int' { PT _ (TS _ 33) }
+  'length' { PT _ (TS _ 34) }
+  'new' { PT _ (TS _ 35) }
+  'return' { PT _ (TS _ 36) }
+  'true' { PT _ (TS _ 37) }
+  'void' { PT _ (TS _ 38) }
+  'while' { PT _ (TS _ 39) }
+  '{' { PT _ (TS _ 40) }
+  '||' { PT _ (TS _ 41) }
+  '}' { PT _ (TS _ 42) }
 
 L_ident  { PT _ (TV $$) }
 L_integ  { PT _ (TI $$) }
@@ -100,6 +108,8 @@ Stm : ';' { SEmpty }
   | Block { SBlock $1 }
   | Type ListItem ';' { SDecl $1 $2 }
   | Ident '=' Exp ';' { SAss $1 $3 }
+  | Ident '[' Exp ']' '=' Exp ';' { SArrAss $1 $3 $6 }
+  | Ident '=' 'new' Type '[' Exp ']' ';' { SNewArrAss $1 $4 $6 }
   | Ident '++' ';' { SIncr $1 }
   | Ident '--' ';' { SDecr $1 }
   | 'return' Exp ';' { SRet $2 }
@@ -107,12 +117,14 @@ Stm : ';' { SEmpty }
   | 'if' '(' Exp ')' Stm { SIf $3 $5 }
   | 'if' '(' Exp ')' Stm 'else' Stm { SIfElse $3 $5 $7 }
   | 'while' '(' Exp ')' Stm { SWhile $3 $5 }
+  | 'for' '(' Type Ident ':' Exp ')' Stm { SForEach $3 $4 $6 $8 }
   | Exp ';' { SExp $1 }
 
 
 Item :: { Item }
 Item : Ident { IDecl $1 } 
   | Ident '=' Exp { IInit $1 $3 }
+  | Ident '=' 'new' Type '[' Exp ']' { IArrInit $1 $4 $6 }
 
 
 ListItem :: { [Item] }
@@ -120,11 +132,17 @@ ListItem : Item { (:[]) $1 }
   | Item ',' ListItem { (:) $1 $3 }
 
 
-Type :: { Type }
-Type : 'int' { TInt } 
+Type1 :: { Type }
+Type1 : 'int' { TInt } 
   | 'double' { TDoub }
   | 'boolean' { TBool }
   | 'void' { TVoid }
+  | '(' Type ')' { $2 }
+
+
+Type :: { Type }
+Type : Type1 '[]' { TArr $1 } 
+  | Type1 { $1 }
 
 
 ListType :: { [Type] }
@@ -137,6 +155,8 @@ Exp6 :: { Exp }
 Exp6 : Ident { EVar $1 } 
   | Lit { ELit $1 }
   | Ident '(' ListExp ')' { EApp $1 $3 }
+  | Ident '.' 'length' { EArrLen $1 }
+  | Ident '[' Exp ']' { EArrInd $1 $3 }
   | '(' Exp ')' { $2 }
 
 

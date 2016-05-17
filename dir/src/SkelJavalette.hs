@@ -40,6 +40,8 @@ transStm x = case x of
   SBlock block  -> failure x
   SDecl type' items  -> failure x
   SAss id exp  -> failure x
+  SArrAss id exp1 exp2  -> failure x
+  SNewArrAss id type' exp  -> failure x
   SIncr id  -> failure x
   SDecr id  -> failure x
   SRet exp  -> failure x
@@ -47,6 +49,7 @@ transStm x = case x of
   SIf exp stm  -> failure x
   SIfElse exp stm1 stm2  -> failure x
   SWhile exp stm  -> failure x
+  SForEach type' id exp stm  -> failure x
   SExp exp  -> failure x
 
 
@@ -54,6 +57,7 @@ transItem :: Item -> Result
 transItem x = case x of
   IDecl id  -> failure x
   IInit id exp  -> failure x
+  IArrInit id type' exp  -> failure x
 
 
 transType :: Type -> Result
@@ -62,6 +66,7 @@ transType x = case x of
   TDoub  -> failure x
   TBool  -> failure x
   TVoid  -> failure x
+  TArr type'  -> failure x
   TStr  -> failure x
   TFun type' types  -> failure x
 
@@ -71,6 +76,8 @@ transExp x = case x of
   EVar id  -> failure x
   ELit lit  -> failure x
   EApp id exps  -> failure x
+  EArrLen id  -> failure x
+  EArrInd id exp  -> failure x
   ENeg exp  -> failure x
   ENot exp  -> failure x
   EMul exp1 mulop2 exp3  -> failure x

@@ -38,16 +38,18 @@ The set of reserved words is the set of terminals appearing in the grammar. Thos
 
 The reserved words used in Javalette are the following:
   | ``String`` | ``boolean`` | ``double`` | ``else``
-  | ``false`` | ``if`` | ``int`` | ``return``
-  | ``true`` | ``void`` | ``while`` | 
+  | ``false`` | ``for`` | ``if`` | ``int``
+  | ``length`` | ``new`` | ``return`` | ``true``
+  | ``void`` | ``while`` |  | 
 
 The symbols used in Javalette are the following:
   | ( | ) | , | {
-  | } | ; | = | ++
-  | -- | - | ! | &&
-  | || | + | * | /
-  | % | < | <= | >
-  | >= | == | != | 
+  | } | ; | = | [
+  | ] | ++ | -- | :
+  | [] | . | - | !
+  | && | || | + | *
+  | / | % | < | <=
+  | > | >= | == | !=
 
 ===Comments===
 Single-line comments begin with #, //.Multiple-line comments are  enclosed with /* and */.
@@ -73,6 +75,8 @@ All other symbols are terminals.
   |  |  **|**  | //Block// 
   |  |  **|**  | //Type// //[Item]// ``;`` 
   |  |  **|**  | //Ident// ``=`` //Exp// ``;`` 
+  |  |  **|**  | //Ident// ``[`` //Exp// ``]`` ``=`` //Exp// ``;`` 
+  |  |  **|**  | //Ident// ``=`` ``new`` //Type// ``[`` //Exp// ``]`` ``;`` 
   |  |  **|**  | //Ident// ``++`` ``;`` 
   |  |  **|**  | //Ident// ``--`` ``;`` 
   |  |  **|**  | ``return`` //Exp// ``;`` 
@@ -80,21 +84,28 @@ All other symbols are terminals.
   |  |  **|**  | ``if`` ``(`` //Exp// ``)`` //Stm// 
   |  |  **|**  | ``if`` ``(`` //Exp// ``)`` //Stm// ``else`` //Stm// 
   |  |  **|**  | ``while`` ``(`` //Exp// ``)`` //Stm// 
+  |  |  **|**  | ``for`` ``(`` //Type// //Ident// ``:`` //Exp// ``)`` //Stm// 
   |  |  **|**  | //Exp// ``;`` 
   | //Item// | -> | //Ident// 
   |  |  **|**  | //Ident// ``=`` //Exp// 
+  |  |  **|**  | //Ident// ``=`` ``new`` //Type// ``[`` //Exp// ``]`` 
   | //[Item]// | -> | //Item// 
   |  |  **|**  | //Item// ``,`` //[Item]// 
-  | //Type// | -> | ``int`` 
+  | //Type1// | -> | ``int`` 
   |  |  **|**  | ``double`` 
   |  |  **|**  | ``boolean`` 
   |  |  **|**  | ``void`` 
+  |  |  **|**  | ``(`` //Type// ``)`` 
+  | //Type// | -> | //Type1// ``[]`` 
+  |  |  **|**  | //Type1// 
   | //[Type]// | -> | **eps**
   |  |  **|**  | //Type// 
   |  |  **|**  | //Type// ``,`` //[Type]// 
   | //Exp6// | -> | //Ident// 
   |  |  **|**  | //Lit// 
   |  |  **|**  | //Ident// ``(`` //[Exp]// ``)`` 
+  |  |  **|**  | //Ident// ``.`` ``length`` 
+  |  |  **|**  | //Ident// ``[`` //Exp// ``]`` 
   |  |  **|**  | ``(`` //Exp// ``)`` 
   | //Exp5// | -> | ``-`` //Exp6// 
   |  |  **|**  | ``!`` //Exp6// 

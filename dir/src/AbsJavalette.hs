@@ -29,6 +29,8 @@ data Stm =
  | SBlock Block
  | SDecl Type [Item]
  | SAss Ident Exp
+ | SArrAss Ident Exp Exp
+ | SNewArrAss Ident Type Exp
  | SIncr Ident
  | SDecr Ident
  | SRet Exp
@@ -36,12 +38,14 @@ data Stm =
  | SIf Exp Stm
  | SIfElse Exp Stm Stm
  | SWhile Exp Stm
+ | SForEach Type Ident Exp Stm
  | SExp Exp
   deriving (Eq,Ord,Show,Read)
 
 data Item =
    IDecl Ident
  | IInit Ident Exp
+ | IArrInit Ident Type Exp
   deriving (Eq,Ord,Show,Read)
 
 data Type =
@@ -49,6 +53,7 @@ data Type =
  | TDoub
  | TBool
  | TVoid
+ | TArr Type
  | TStr
  | TFun Type [Type]
   deriving (Eq,Ord,Show,Read)
@@ -57,6 +62,8 @@ data Exp =
    EVar Ident
  | ELit Lit
  | EApp Ident [Exp]
+ | EArrLen Ident
+ | EArrInd Ident Exp
  | ENeg Exp
  | ENot Exp
  | EMul Exp MulOp Exp
