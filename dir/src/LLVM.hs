@@ -6,6 +6,7 @@ import AbsJavalette
 data Instruction =
       Text  String
     | GlobStr String Int String
+    | GlobArr String Int Type [String]
     | GetElemPtr String Int String
     | VFuncCall Type String [(Type, String)]
     | FuncCall String Type String [(Type, String)]
@@ -36,6 +37,11 @@ instance Show Instruction where
     show (Text s)                 = s
     show (GlobStr name len s)     = name ++ " = internal constant [" ++ (show len) ++
                                     " x i8] c\"" ++ s ++ "\00\""
+                                    {-
+    show (GlobArr name len t els) = name ++ " = {i32, [" ++ show len ++ 
+                                    " x " ++ toLType t ++ "] }\n             [" ++ 
+                                    showArr t els ++ "]"
+                                    -} -- Note: probably incorrect!
     show (GetElemPtr lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
                                     " x i8]* " ++ gId ++ ", i32 0, i32 0"
     show (VFuncCall t id args)    = "call " ++ (toLType t) ++ " " ++ id ++ "(" ++ 
@@ -82,6 +88,11 @@ toLType t = case t of
     TBool   -> "i1"
     TStr    -> "i8*"
     TVoid   -> "void"
+
+showArr :: Type -> [String] -> String
+showArr t []     = ""
+showArr t [s]    = toLType t ++ " " ++ s
+showArr t (s:ss) = toLType t ++ " " ++ s ++ ", " ++ showArr t ss
 
 showArgs :: [(Type, String)] -> String
 showArgs []            = ""

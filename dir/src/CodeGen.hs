@@ -106,7 +106,7 @@ compileStms (s:ss) = do
         ([], SIfElse _ _ _)                       -> emitText "unreachable"
         ([], SWhile  _ _  )                       -> emitText "unreachable"
         (_ , SWhile (EType TBool (ELit LTrue)) _) -> emitText "unreachable"
-        _                   -> compileStms ss
+        _                                         -> compileStms ss
 
 
 -- compileStm compiles a single statement
@@ -120,6 +120,10 @@ compileStm (SDecl t items)      = compileItems t items
 compileStm (SAss (Ident str) e@(EType t _)) = do
     res <- compileExp e
     emit $ Store t res str
+
+-- renameStm env (SArrAss id e1 e2) 
+
+--compileStm (SNewArrAss id t e)  = 
 
 compileStm (SIncr jId)          = compileStm $ SAss jId $ EType TInt $ 
                                     EAdd (EType TInt (EVar jId)) Plus (ELit (LInt 1)) 
@@ -189,7 +193,13 @@ compileItems t ((IInit id@(Ident s) exp):is) = do
     emit $ Alloca t s
     compileStm $ SAss id exp
     compileItems t is
-
+    {-
+compileItems at ((IArrInit id@(Ident s) t exp):is) = do
+    extendVar id
+    -- do some alloc?
+    compileStm $ SNewArrAss id t exp
+    compileItems at is
+-}
 -- defaultValue is an auxiliary function to compileItems. It gives the given
 -- Javalette variable a default value and stores it.
 defaultValue :: Type -> String -> State Env ()
