@@ -33,7 +33,7 @@ check :: FilePath -> IO ()
 check file = do
     s <- readFile file
     case check' s of
-        Bad err  -> hPutStr stderr ("ERROR\n" ++ err) >> exitFailure
+        Bad err  -> hPutStr stderr ("ERROR\n" ++ err ++ "\n") >> exitFailure
         Ok  tree -> do
             --compileCode file tree
             hPutStr stderr ("OK\n" ++ printTree tree) >> exitSuccess
@@ -43,8 +43,7 @@ check' s = do
     pTree <- pProgram (myLexer s)
     tTree <- typecheck pTree
     returncheck tTree
-    return tTree                -- TODO: remove this row when alpha has arrays
-    --return $ alphaRen tTree
+    return $ alphaRen tTree
 
 compileCode :: FilePath -> Program -> IO ()
 compileCode file prog = do

@@ -67,6 +67,9 @@ extendFuncSig id t = do
 newCxt :: TypeCheckM ()
 newCxt = modify (\env -> env{cxts = (M.empty):(cxts env)})
 
+rmCxt :: TypeCheckM ()
+rmCxt = modify (\env -> env{cxts = tail (cxts env)})
+
 -- emptyEnv returns an empty environment
 emptyEnv :: Env
 emptyEnv = Env M.empty []
@@ -125,6 +128,7 @@ checkDef (FnDef t id args (DBlock stms)) = do
     newCxt
     addVToC args
     stms' <- checkStms t stms
+    rmCxt
     return $ FnDef t id args (DBlock stms')
 
 
@@ -148,6 +152,7 @@ checkStm rt stm = case stm of
     SBlock (DBlock stms)  -> do
         newCxt
         stms' <- checkStms rt stms
+        rmCxt
         return (SBlock (DBlock stms'))
         
     SDecl t items         -> do 
@@ -208,9 +213,11 @@ checkStm rt stm = case stm of
         return (SWhile te stm1')
         
     SForEach t id exp stm1 -> do -- for(t id : exp) stm1
+        newCxt
         extendVar id t
         te    <- checkExp (TArr t) exp
         tstm1 <- checkStm rt stm1
+        rmCxt
         return $ SForEach t id te tstm1
         
     SExp exp -> do

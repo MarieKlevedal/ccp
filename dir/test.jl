@@ -1,9 +1,7 @@
 int main(){
-    int[] xs = new int[10];
-    for (int x : xs) {
-        printInt(x);
-    } 
-    
-    return 1;
+    int[] xs = new int[5];
+    for (int x : xs) printInt(x);
+    xs[xs.length-1] = 5;
+    return xs[0];
 }
 

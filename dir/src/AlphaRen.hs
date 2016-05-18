@@ -1,6 +1,7 @@
 module AlphaRen where
 
 import AbsJavalette
+import PrintJavalette
 
 import Data.Map
 import qualified Data.Map as M
@@ -60,6 +61,7 @@ lookupVar :: Env -> Ident -> Ident
 lookupVar env id = searchCxts (cxts env) id
     
 searchCxts :: [Cxt] -> Ident -> Ident
+searchCxts []     id = error $ "variable " ++ printTree id ++ " not in scope"
 searchCxts (c:cs) id = case M.lookup id c of
     Just newId  -> newId
     Nothing     -> searchCxts cs id
@@ -122,6 +124,13 @@ renameStm env (SDecl t items)      = (env', (SDecl t items'))
 renameStm env (SAss id exp)        = (env, (SAss id' exp'))
     where id'  = lookupVar env id
           exp' = renameExp env exp
+renameStm env (SArrAss id e1 e2)   = (env, (SArrAss id' e1' e2')) -- id[e1] = e2
+    where id' = lookupVar env id
+          e1' = renameExp env e1
+          e2' = renameExp env e2
+renameStm env (SNewArrAss id t e)  = (env, (SNewArrAss id' t e')) -- id = new t[e]
+    where id' = lookupVar env id
+          e'  = renameExp env e
 renameStm env (SIncr id)           = (env, (SIncr (lookupVar env id))) 
 renameStm env (SDecr id)           = (env, (SDecr (lookupVar env id))) 
 renameStm env (SRet exp)           = (env, (SRet (renameExp env exp)))
@@ -136,15 +145,24 @@ renameStm env (SIfElse exp s1 s2)  = (env'', (SIfElse exp' s1' s2'))
 renameStm env (SWhile exp s)       = (env', (SWhile exp' s'))
     where exp'       = renameExp env exp
           (env', s') = renameStm env s
+renameStm env (SForEach t id e s)  = ((rmCxt env''), (SForEach t id' e' s')) 
+    -- for(t id : e) s
+    where (env', id') = addVToEnv (newCxt env) id
+          e'          = renameExp env' e
+          (env'', s') = renameStm env' s
 renameStm env (SExp exp)           = (env, (SExp (renameExp env exp)))
  
 renameDecl :: Env -> [Item] -> (Env, [Item])
 renameDecl env []           = (env, [])
 renameDecl env (item:items) = case item of
-    (IDecl id) -> (env'', (IDecl id'):items')
+    (IDecl id)          -> (env'', (IDecl id'):items')
         where (env' , id')    = addVToEnv env id
               (env'', items') = renameDecl env' items
-    (IInit id exp) -> (env'', (IInit id' exp'):items')
+    (IInit id exp)      -> (env'', (IInit id' exp'):items')
+        where exp'            = renameExp env exp
+              (env' , id')    = addVToEnv env id
+              (env'', items') = renameDecl env' items
+    (IArrInit id t exp) -> (env'', (IArrInit id' t exp'):items') -- id = new t [exp]
         where exp'            = renameExp env exp
               (env' , id')    = addVToEnv env id
               (env'', items') = renameDecl env' items
@@ -156,6 +174,8 @@ renameExp env (ELit l)        = ELit l
 renameExp env (EApp id es)    = EApp id' es'
     where id' = lookupFun env id
           es' = Prelude.map (\e -> renameExp env e) es
+renameExp env (EArrLen id)    = EArrLen $ lookupVar env id    -- id.length
+renameExp env (EArrInd id e)  = EArrInd (lookupVar env id) (renameExp env e) -- id[e]
 renameExp env (ENeg e)        = ENeg $ renameExp env e
 renameExp env (ENot e)        = ENot $ renameExp env e
 renameExp env (EMul e1 op e2) = EMul (renameExp env e1) op (renameExp env e2)
