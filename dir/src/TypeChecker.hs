@@ -155,17 +155,21 @@ checkStm rt stm = case stm of
         return (SDecl t items')
                     
     SAss id exp           -> do
-        t <- lookVar id
+        t  <- lookVar id
         te <- checkExp t exp
         return (SAss id te)
     
-    -- SArrAss id e1 e2 -> -- id[e1] = e2                   -- TODO
+    SArrAss id e1 e2      -> do -- id[e1] = e2
+        (TArr t) <- lookVar id
+        te1      <- checkExp TInt e1
+        te2      <- checkExp t e2 
+        return $ SArrAss id te1 te2
 
-    SNewArrAss id t exp  -> do -- id = new t[exp]
+    SNewArrAss id t exp   -> do -- id = new t[exp]
         (TArr t2) <- lookVar id
-        etype <- checkExp TInt exp
+        te        <- checkExp TInt exp
         if t == t2
-        then return $ SNewArrAss id t etype
+        then return $ SNewArrAss id t te
         else error $ "array " ++ (printTree id) ++ " of incorrect type"
     
     SIncr id              -> do
@@ -193,17 +197,21 @@ checkStm rt stm = case stm of
         return (SIf te stm1')
         
     SIfElse exp stm1 stm2 -> do
-        te <- checkExp TBool exp
+        te    <- checkExp TBool exp
         stm1' <- checkStm rt stm1
         stm2' <- checkStm rt stm2
         return (SIfElse te stm1' stm2')
         
-    SWhile exp stm1 -> do
-        te         <- checkExp TBool exp
+    SWhile exp stm1       -> do
+        te    <- checkExp TBool exp
         stm1' <- checkStm rt stm1
         return (SWhile te stm1')
         
-    -- SForEach                                                    -- TODO
+    SForEach t id exp stm1 -> do -- for(t id : exp) stm1
+        extendVar id t
+        te    <- checkExp (TArr t) exp
+        tstm1 <- checkStm rt stm1
+        return $ SForEach t id te tstm1
         
     SExp exp -> do
         te <- inferExp exp
@@ -221,14 +229,14 @@ checkDecl t (item:items) = case item of
         items' <- checkDecl t items
         return $ (IDecl id):items'
     (IInit id exp) -> do
-        etype <- checkExp t exp
+        etype  <- checkExp t exp
         extendVar id t
         items' <- checkDecl t items
         return ((IInit id etype):items')
     (IArrInit id t2 exp) -> let (TArr t') = t in
         if t2 == t'
         then do
-            etype <- checkExp TInt exp
+            etype  <- checkExp TInt exp
             extendVar id t
             items' <- checkDecl t items
             return ((IArrInit id t2 etype):items')
@@ -264,7 +272,7 @@ inferExp exp = case exp of
     
     -- Check that the function call has the correct types and return the return
     -- type of the function
-    EApp id exps    -> case (\(Ident str) -> str) id of
+    EApp id exps   -> case (\(Ident str) -> str) id of
         "printString" -> case exps of
             [ELit (LStr s)] -> return $ EType TVoid $ EApp id [(EType TStr (ELit (LStr s)))]  
             _               -> fail "Function printString called with incorrect args"
@@ -273,15 +281,21 @@ inferExp exp = case exp of
             tes <- checkArgTypes argTs exps
             return $ EType retT (EApp id tes)
     
-    -- EArrLen.         Exp6    ::= Ident "." "length" ;            -- TODO
-    -- EArrInd.         Exp6    ::= Ident "[" Exp "]" ;             -- TODO
+    EArrLen id     -> do    -- id.length
+        (TArr _) <- lookVar id
+        return $ EType TInt $ EArrLen id
     
-    ENeg e          -> do
+    EArrInd id e   -> do    -- id[e]
+        (TArr t) <- lookVar id
+        te <- checkExp TInt e
+        return $ EType t $ EArrInd id te
+    
+    ENeg e         -> do
         te@(EType t _) <- inferExp e
         case elem t [TInt, TDoub] of
             True -> return $ EType t (ENeg te)
             _    -> fail $ "Incorrect type of expression " ++ printTree e
-    ENot e          -> do
+    ENot e         -> do
         te <- checkExp TBool e
         return $ EType TBool $ ENot te
         
@@ -298,7 +312,7 @@ inferExp exp = case exp of
                 return $ EType t (EMul te1 op te2)
             _    -> fail $ "Incorrect type of expression " ++ printTree e1
     
-    EAdd e1 op e2   -> do
+    EAdd e1 op e2  -> do
         te1@(EType t _) <- inferExp e1
         case elem t [TInt, TDoub] of
             True -> do
@@ -306,7 +320,7 @@ inferExp exp = case exp of
                 return $ EType t (EAdd te1 op te2)
             _    -> fail $ "Incorrect type of expression " ++ printTree e1 
     
-    ERel e1 op e2   -> do
+    ERel e1 op e2  -> do
         te1@(EType t _) <- inferExp e1
         case elem t [TInt, TDoub, TBool] of
             True -> do
@@ -314,12 +328,12 @@ inferExp exp = case exp of
                 return $ EType TBool (ERel te1 op te2)
             _    -> fail $ "Incorrect type of expression " ++ printTree e1 
             
-    EAnd e1 e2      -> do
+    EAnd e1 e2     -> do
         te1 <- checkExp TBool e1
         te2 <- checkExp TBool e2
         return $ EType TBool (EAnd te1 te2)
         
-    EOr e1 e2       -> do
+    EOr e1 e2      -> do
         te1 <- checkExp TBool e1
         te2 <- checkExp TBool e2
         return $ EType TBool (EOr te1 te2)
