@@ -1,5 +1,5 @@
-Får denna utskrift när vi kör testsuiten. Funkar dock att köra manuellt när vi
-har bytt ut runCommand mot callCommand.
+Får denna utskrift när vi kör testsuiten. Det skapas dock en .bc-fil i 
+graderTestSuite/good och main-filer och a.out i dir.
 
 Testing intarith5.jl: /chalmers/sw/sup64/phc/b/binh/llvm-ld
 llvm-ld: error: Cannot load file '/chalmers/users/klevdal/CC/ccp/dir/tester/../graderTestSuite/good/intarith5.bc': Bitcode file '/chalmers/users/klevdal/CC/ccp/dir/tester/../graderTestSuite/good/intarith5.bc' could not be loaded: Unknown bitstream version!
