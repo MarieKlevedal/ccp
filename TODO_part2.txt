@@ -1,3 +1,20 @@
+Får denna utskrift när vi kör testsuiten. Funkar dock att köra manuellt när vi
+har bytt ut runCommand mot callCommand.
+
+Testing intarith5.jl: /chalmers/sw/sup64/phc/b/binh/llvm-ld
+llvm-ld: error: Cannot load file '/chalmers/users/klevdal/CC/ccp/dir/tester/../graderTestSuite/good/intarith5.bc': Bitcode file '/chalmers/users/klevdal/CC/ccp/dir/tester/../graderTestSuite/good/intarith5.bc' could not be loaded: Unknown bitstream version!
+./a.out failed: with status 127
+For source file /chalmers/users/klevdal/CC/ccp/dir/tester/../graderTestSuite/good/intarith5.jl:
+It printed this to standard error:
+/bin/sh: ./a.out: No such file or directory
+
+
+
+
+
+
+
+
 TODO
 ----
 ¤ Flytta över ansvaret i jlc till Main, använd System.Process (funktionen
