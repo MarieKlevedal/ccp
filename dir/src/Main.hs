@@ -53,11 +53,11 @@ compileCode file prog = do
     let llFile = replaceExtension file "ll" -- creates ll file and path to it
     writeFile llFile code                   -- put compiled code in ll file
     
-    --runCommand $ "llvm-as " ++ llFile 
-    --let bcFile = (dropExtension file) ++ ".bc"
-    --runCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc" 
-    --runCommand "llc -filetype=obj main.bc"
-    --runCommand "gcc main.o"
+    callCommand $ "llvm-as " ++ llFile
+    let bcFile = (dropExtension file) ++ ".bc"
+    callCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc" 
+    callCommand "llc -filetype=obj main.bc"
+    callCommand "gcc main.o"
     
     return ()
     

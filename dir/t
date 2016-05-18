@@ -6,14 +6,15 @@ rm main.bc
 rm main.o
 rm a.out
 
-#./jlc test.jl
+./jlc test.jl
 
-./jlc tester/testsuite/good/core030.jl
-llvm-as tester/testsuite/good/core030.ll
-llvm-link tester/testsuite/good/core030.bc lib/runtime.bc -o main.bc
-llc -filetype=obj main.bc
-gcc main.o
-./a.out
-echo ""
-cat tester/testsuite/good/core030.output
-echo "----------------------------------------"
+#./jlc graderTestSuite/core030.jl
+
+# llvm-as tester/testsuite/good/core030.ll
+# llvm-link tester/testsuite/good/core030.bc lib/runtime.bc -o main.bc
+# llc -filetype=obj main.bc
+# gcc main.o
+# ./a.out
+# echo ""
+# cat tester/testsuite/good/core030.output
+# echo "----------------------------------------"
