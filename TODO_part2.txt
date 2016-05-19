@@ -9,7 +9,9 @@ It printed this to standard error:
 /bin/sh: ./a.out: No such file or directory
 
 
-
+Vi kan använda callProcess om vi vill.
+Returnera inte ok om inte codeGen funkar.
+Se mer på fire!
 
 
 
