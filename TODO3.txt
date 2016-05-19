@@ -1,0 +1,11 @@
+TODO
+----
+SArrAss id e1 e2
+SNewArrAss id t exp 
+SForEach t id exp stm1
+IArrInit id t2 exp
+EArrLen id 
+EArrInd id e
+
+Gör internal stm for free(a)?
+
