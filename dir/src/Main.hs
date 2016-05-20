@@ -29,7 +29,6 @@ main = do
       
 -- check takes the string representation of the test program as input. It 
 -- lexes and parses it into an AST and then typechecks and returnchecks it.
---check :: String -> Err Program
 check :: FilePath -> IO ()
 check file = do
     s <- readFile file
@@ -51,6 +50,7 @@ compileCode file prog = do
     let code   = codeGen prog               -- get llvm code (string)
     let llFile = replaceExtension file "ll" -- creates ll file and path to it
     writeFile llFile code                   -- put compiled code in ll file
+    
     let bcFile = (dropExtension file) ++ ".bc"
     
     res <- try $ (callCommand $ "llvm-as " ++ llFile) >> 

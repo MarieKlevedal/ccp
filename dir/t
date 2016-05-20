@@ -5,41 +5,7 @@ cd ..
 rm main.*
 rm a.out
 
-#rm test.ll
-#rm test.bc
-#./jlc test.jl
-
-cd graderTestSuite/good
-rm *.ll
-rm *.bc
-cd ../..
-
-./jlc graderTestSuite/good/intarith.jl
-./a.out
-echo ""
-cat graderTestSuite/good/intarith.output
-echo "----------------------------------------"
-
-./jlc graderTestSuite/good/intarith2.jl
-./a.out
-echo ""
-cat graderTestSuite/good/intarith2.output
-echo "----------------------------------------"
-
-./jlc graderTestSuite/good/intarith3.jl
-./a.out
-echo ""
-cat graderTestSuite/good/intarith3.output
-echo "----------------------------------------"
-
-./jlc graderTestSuite/good/intarith4.jl
-./a.out
-echo ""
-cat graderTestSuite/good/intarith4.output
-echo "----------------------------------------"
-
-./jlc graderTestSuite/good/intarith5.jl
-./a.out
-echo ""
-cat graderTestSuite/good/intarith5.output
-echo "----------------------------------------"
+rm test.ll
+rm test.bc
+./jlc test.jl
+llvm-link test.bc
