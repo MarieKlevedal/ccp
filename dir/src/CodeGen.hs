@@ -115,10 +115,10 @@ compileStm  SEmpty              = return ()
 compileStm (SBlock (DBlock ss)) = compileBlock ss where 
     compileBlock []     = return ()
     compileBlock (s:ss) = do
-    compileStm s
-    case s of
-        SWhile (EType TBool (ELit LTrue)) _ -> emitText "unreachable"
-        _                                   -> compileBlock ss
+        compileStm s
+        case s of
+            SWhile (EType TBool (ELit LTrue)) _ -> emitText "unreachable"
+            _                                   -> compileBlock ss
 
 compileStm (SDecl t items)      = compileItems t items
 
@@ -142,15 +142,7 @@ compileStm (SRet e@(EType t _)) = do
 
 compileStm  SVRet               = emit VReturn
 
-compileStm (SIf e s)            = do
-    lTrue  <- newLabel
-    lEnd   <- newLabel
-    str    <- compileExp e
-    emit $ Br2 str lTrue lEnd
-    emit $ Label lTrue
-    compileStm s
-    emit $ Br1 lEnd
-    emit $ Label lEnd
+compileStm (SIf e s)            = compileStm $ SIfElse e s SEmpty
 
 compileStm (SIfElse e s1 s2)    = do
     lTrue  <- newLabel
@@ -306,47 +298,38 @@ compileExp (ERel e1@(EType t _) op e2) = do
         TBool   -> emit $ BCmp res op str1 str2
     return res
 
-compileExp(EAnd e1 e2) = do
-    lTrue           <- newLabel
-    lFalse          <- newLabel
-    lEnd            <- newLabel
-    str1            <- compileExp e1
-    rId@(Ident res) <- newVar
-    extendVar rId
-    emit $ Alloca TBool res
-    emit $ Br2 str1 lTrue lFalse
-    emit $ Label lTrue
-    str2 <- compileExp e2
-    emit $ Store TBool str2 res
-    emit $ Br1 lEnd
-    emit $ Label lFalse
-    emit $ Store TBool "false" res
-    emit $ Br1 lEnd
-    emit $ Label lEnd
-    (Ident res') <- newVar
-    emit $ Load res' TBool res
-    return res'
+compileExp(EAnd e1 e2) = compileAndOr "and" e1 e2
 
-compileExp (EOr e1 e2) = do
-    lTrue           <- newLabel
-    lFalse          <- newLabel
-    lEnd            <- newLabel
-    str1            <- compileExp e1
-    rId@(Ident res) <- newVar
-    extendVar rId
-    emit $ Alloca TBool res
-    emit $ Br2 str1 lTrue lFalse
-    emit $ Label lTrue
-    emit $ Store TBool "true" res
-    emit $ Br1 lEnd
-    emit $ Label lFalse
-    str2 <- compileExp e2
-    emit $ Store TBool str2 res 
-    emit $ Br1 lEnd
-    emit $ Label lEnd
-    (Ident res') <- newVar
-    emit $ Load res' TBool res
-    return res'
+compileExp (EOr e1 e2) = compileAndOr "or" e1 e2
 
 compileExp (EType t e) = compileExp e 
+
+compileAndOr :: String -> Exp -> Exp -> State Env String
+compileAndOr op e1 e2 = do
+    lTrue           <- newLabel
+    lFalse          <- newLabel
+    lEnd            <- newLabel
+    str1            <- compileExp e1
+    rId@(Ident res) <- newVar
+    extendVar rId
+    emit $ Alloca TBool res
+    emit $ Br2 str1 lTrue lFalse
+    emit $ Label lTrue
+    case op of
+        "and" -> do
+            str2 <- compileExp e2           
+            emit $ Store TBool str2 res     
+        "or"  -> emit $ Store TBool "true" res
+    emit $ Br1 lEnd
+    emit $ Label lFalse
+    case op of
+        "and" -> emit $ Store TBool "false" res
+        "or"  -> do
+            str2 <- compileExp e2
+            emit $ Store TBool str2 res 
+    emit $ Br1 lEnd
+    emit $ Label lEnd
+    (Ident res') <- newVar
+    emit $ Load res' TBool res
+    return res'
 
