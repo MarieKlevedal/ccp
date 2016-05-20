@@ -2,11 +2,14 @@ module LLVM where
 
 import AbsJavalette
 
-
-data Instruction =
-      Text  String
+data HeaderInstr =
+      FuncDecl Type String [Type]
     | GlobStr String Int String
     | GlobArr String Int Type [String]
+    | Empty
+
+data Instruction =
+      Text String
     | GetElemPtr String Int String
     | VFuncCall Type String [(Type, String)]
     | FuncCall String Type String [(Type, String)]
@@ -33,8 +36,9 @@ data Instruction =
     | ICmp String RelOp String String
     | FCmp String RelOp String String
 
-instance Show Instruction where
-    show (Text s)                 = s
+instance Show HeaderInstr where
+    show (FuncDecl t name ts)     = "declare " ++ (toLType t) ++ " " ++ name ++
+                                    "(" ++ showTypes ts ++ ")"
     show (GlobStr name len s)     = name ++ " = internal constant [" ++ (show len) ++
                                     " x i8] c\"" ++ s ++ "\00\""
                                     {-
@@ -42,6 +46,10 @@ instance Show Instruction where
                                     " x " ++ toLType t ++ "] }\n             [" ++ 
                                     showArr t els ++ "]"
                                     -} -- Note: probably incorrect!
+    show  Empty                   = ""
+
+instance Show Instruction where
+    show (Text s)                 = s
     show (GetElemPtr lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
                                     " x i8]* " ++ gId ++ ", i32 0, i32 0"
     show (VFuncCall t id args)    = "call " ++ (toLType t) ++ " " ++ id ++ "(" ++ 
@@ -88,6 +96,11 @@ toLType t = case t of
     TBool   -> "i1"
     TStr    -> "i8*"
     TVoid   -> "void"
+
+showTypes :: [Type] -> String
+showTypes []     = ""
+showTypes [t]    = toLType t
+showTypes (t:ts) = toLType t ++ ", " ++ showTypes ts 
 
 showArr :: Type -> [String] -> String
 showArr t []     = ""

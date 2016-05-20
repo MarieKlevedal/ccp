@@ -1,5 +1,5 @@
 int main(){
-    boolean b = true && 4 < 5;
+    printString("abc");
     return 0;
 }
 

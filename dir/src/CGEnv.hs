@@ -14,7 +14,7 @@ data Env = Env {
     funcs        :: M.Map Ident Type,     -- map of function id + function type
     varCounter   :: Int,                  -- the next available name for a variable
     labelCounter :: Int,                  -- the next free label number
-    header       :: [Instruction],        -- list of header instructions to execute
+    header       :: [HeaderInstr],        -- list of header instructions to execute
     code         :: [Instruction]         -- list of instructions to execute
 }
 
