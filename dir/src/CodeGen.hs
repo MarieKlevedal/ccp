@@ -108,12 +108,17 @@ compileStms (s:ss) = do
         (_ , SWhile (EType TBool (ELit LTrue)) _) -> emitText "unreachable"
         _                                         -> compileStms ss
 
-
 -- compileStm compiles a single statement
 compileStm :: Stm -> State Env ()
 compileStm  SEmpty              = return ()
 
-compileStm (SBlock (DBlock ss)) = compileStms ss
+compileStm (SBlock (DBlock ss)) = compileBlock ss where 
+    compileBlock []     = return ()
+    compileBlock (s:ss) = do
+    compileStm s
+    case s of
+        SWhile (EType TBool (ELit LTrue)) _ -> emitText "unreachable"
+        _                                   -> compileBlock ss
 
 compileStm (SDecl t items)      = compileItems t items
 

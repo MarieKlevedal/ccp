@@ -3,5 +3,10 @@ cd src
 make
 cd ..
 
+rm main.*
+rm a.out
+
+rm test.ll
+rm test.bc
 ./jlc test.jl
 

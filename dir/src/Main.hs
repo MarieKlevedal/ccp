@@ -3,6 +3,7 @@ import System.Exit --(exitFailure)
 import System.IO
 import System.FilePath.Posix
 import System.Process
+import Control.Exception
 
 import AbsJavalette
 import LexJavalette
@@ -28,7 +29,6 @@ main = do
       
 -- check takes the string representation of the test program as input. It 
 -- lexes and parses it into an AST and then typechecks and returnchecks it.
---check :: String -> Err Program
 check :: FilePath -> IO ()
 check file = do
     s <- readFile file
@@ -47,18 +47,21 @@ check' s = do
 
 compileCode :: FilePath -> Program -> IO ()
 compileCode file prog = do
-    let name   = takeBaseName file          -- extract file name (string)
     let code   = codeGen prog               -- get llvm code (string)
-    let dir    = takeDirectory file         -- get path (string)
     let llFile = replaceExtension file "ll" -- creates ll file and path to it
     writeFile llFile code                   -- put compiled code in ll file
     
-    --runCommand $ "llvm-as " ++ llFile 
-    --let bcFile = (dropExtension file) ++ ".bc"
-    --runCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc" 
-    --runCommand "llc -filetype=obj main.bc"
-    --runCommand "gcc main.o"
+    let bcFile = (dropExtension file) ++ ".bc"
     
-    return ()
+    res <- try $ (callCommand $ "llvm-as " ++ llFile) >> 
+                 (callCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc") 
+    case (res :: Either IOError ())  of
+        Right _ -> do              
+            callCommand "llc -filetype=obj main.bc"
+            callCommand "gcc main.o"
+            return ()
+        Left _ -> do
+            hPutStr stderr ("ERROR\n" ++ "Couldn't compile llvm file\n") >> exitFailure
+    
     
 
