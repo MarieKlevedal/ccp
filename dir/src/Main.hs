@@ -3,6 +3,7 @@ import System.Exit --(exitFailure)
 import System.IO
 import System.FilePath.Posix
 import System.Process
+import Control.Exception
 
 import AbsJavalette
 import LexJavalette
@@ -47,18 +48,20 @@ check' s = do
 
 compileCode :: FilePath -> Program -> IO ()
 compileCode file prog = do
-    let name   = takeBaseName file          -- extract file name (string)
     let code   = codeGen prog               -- get llvm code (string)
-    let dir    = takeDirectory file         -- get path (string)
     let llFile = replaceExtension file "ll" -- creates ll file and path to it
     writeFile llFile code                   -- put compiled code in ll file
-    
-    callCommand $ "llvm-as " ++ llFile
     let bcFile = (dropExtension file) ++ ".bc"
-    callCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc" 
-    callCommand "llc -filetype=obj main.bc"
-    callCommand "gcc main.o"
     
-    return ()
+    res <- try $ (callCommand $ "llvm-as " ++ llFile) >> 
+                 (callCommand $ "llvm-link " ++ bcFile ++ " lib/runtime.bc -o main.bc") 
+    case (res :: Either IOError ())  of
+        Right _ -> do              
+            callCommand "llc -filetype=obj main.bc"
+            callCommand "gcc main.o"
+            return ()
+        Left _ -> do
+            hPutStr stderr ("ERROR\n" ++ "Couldn't compile llvm file\n") >> exitFailure
+    
     
 

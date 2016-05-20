@@ -2,13 +2,14 @@
 cd src
 make
 cd ..
-rm main.bc
-rm main.o
+rm main.*
 rm a.out
 
-#./jlc test.jl
+rm test.ll
+rm test.bc
+./jlc test.jl
 
-./jlc graderTestSuite/good/core001.jl
+#./jlc graderTestSuite/good/core001.jl
 
 # llvm-as tester/testsuite/good/core030.ll
 # llvm-link tester/testsuite/good/core030.bc lib/runtime.bc -o main.bc
