@@ -5,17 +5,41 @@ cd ..
 rm main.*
 rm a.out
 
-rm test.ll
-rm test.bc
-./jlc test.jl
+#rm test.ll
+#rm test.bc
+#./jlc test.jl
 
-#./jlc graderTestSuite/good/core001.jl
+cd graderTestSuite/good
+rm *.ll
+rm *.bc
+cd ../..
 
-# llvm-as tester/testsuite/good/core030.ll
-# llvm-link tester/testsuite/good/core030.bc lib/runtime.bc -o main.bc
-# llc -filetype=obj main.bc
-# gcc main.o
-# ./a.out
-# echo ""
-# cat tester/testsuite/good/core030.output
-# echo "----------------------------------------"
+./jlc graderTestSuite/good/intarith.jl
+./a.out
+echo ""
+cat graderTestSuite/good/intarith.output
+echo "----------------------------------------"
+
+./jlc graderTestSuite/good/intarith2.jl
+./a.out
+echo ""
+cat graderTestSuite/good/intarith2.output
+echo "----------------------------------------"
+
+./jlc graderTestSuite/good/intarith3.jl
+./a.out
+echo ""
+cat graderTestSuite/good/intarith3.output
+echo "----------------------------------------"
+
+./jlc graderTestSuite/good/intarith4.jl
+./a.out
+echo ""
+cat graderTestSuite/good/intarith4.output
+echo "----------------------------------------"
+
+./jlc graderTestSuite/good/intarith5.jl
+./a.out
+echo ""
+cat graderTestSuite/good/intarith5.output
+echo "----------------------------------------"
