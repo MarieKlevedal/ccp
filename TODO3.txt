@@ -9,3 +9,16 @@ EArrInd id e
 
 Gör internal stm for free(a)?
 
+
+Skapa funktion som anropar newLocVar och en som anropar extendVar, båda med
+inparameter "t".
+
+Arrayerna vi använder i LLVM kallas "Pascal style"
+
+How to use calloc:
+  ¤ http://www.wilfred.me.uk/blog/2015/02/21/my-first-llvm-compiler/
+  ¤ http://www.cplusplus.com/reference/cstdlib/calloc/
+    "void* calloc (size_t num, size_t size);
+    Allocate and zero-initialize array.
+    Allocates a block of memory for an array of num elements, each of them size 
+    bytes long, and initializes all its bits to zero."

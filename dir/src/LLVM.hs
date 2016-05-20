@@ -5,7 +5,7 @@ import AbsJavalette
 data HeaderInstr =
       FuncDecl Type String [Type]
     | GlobStr String Int String
-    | GlobArr String Int Type [String]
+    | CreateArr String String Type
     | Empty
 
 data Instruction =
@@ -37,34 +37,32 @@ data Instruction =
     | FCmp String RelOp String String
 
 instance Show HeaderInstr where
-    show (FuncDecl t name ts)     = "declare " ++ (toLType t) ++ " " ++ name ++
+    show (FuncDecl t name ts)     = "declare " ++ (showType t) ++ " " ++ name ++
                                     "(" ++ showTypes ts ++ ")"
     show (GlobStr name len s)     = name ++ " = internal constant [" ++ (show len) ++
                                     " x i8] c\"" ++ s ++ "\00\""
-                                    {-
-    show (GlobArr name len t els) = name ++ " = {i32, [" ++ show len ++ 
-                                    " x " ++ toLType t ++ "] }\n             [" ++ 
-                                    showArr t els ++ "]"
-                                    -} -- Note: probably incorrect!
+    show (CreateArr arr sarr t)   = arr ++ " = type " ++ sarr ++ "*\n" ++ 
+                                    sarr ++ " = type {i32, [0 x " ++ (showType t) ++
+                                    "]}"  
     show  Empty                   = ""
 
 instance Show Instruction where
     show (Text s)                 = s
     show (GetElemPtr lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
                                     " x i8]* " ++ gId ++ ", i32 0, i32 0"
-    show (VFuncCall t id args)    = "call " ++ (toLType t) ++ " " ++ id ++ "(" ++ 
+    show (VFuncCall t id args)    = "call " ++ (showType t) ++ " " ++ id ++ "(" ++ 
                                     (showArgs args) ++ ")"
-    show (FuncCall ret t id args) = ret ++ " = call " ++ (toLType t) ++ " " ++ id ++ 
+    show (FuncCall ret t id args) = ret ++ " = call " ++ (showType t) ++ " " ++ id ++ 
                                     "(" ++ (showArgs args) ++ ")"
     show (Label s)                = "\n" ++ s ++ ": "
     show (Br1 str)                = "br label %" ++ str
     show (Br2 e l1 l2)            = "br i1 " ++ e ++ ", label %" ++ l1 ++ 
                                     ", label %" ++ l2
-    show (Alloca t id)            = id ++ " = alloca " ++ toLType t 
-    show (Store t lId jId)        = "store " ++ (toLType t) ++ " " ++ lId ++ 
-                                    " , " ++ (toLType t) ++ "* " ++ jId
-    show (Load lId t jId)         = lId ++ " = load " ++ (toLType t) ++ "* " ++ jId
-    show (Return t s)             = "ret " ++ (toLType t) ++ " " ++ s    
+    show (Alloca t id)            = id ++ " = alloca " ++ showType t 
+    show (Store t lId jId)        = "store " ++ (showType t) ++ " " ++ lId ++ 
+                                    " , " ++ (showType t) ++ "* " ++ jId
+    show (Load lId t jId)         = lId ++ " = load " ++ (showType t) ++ "* " ++ jId
+    show (Return t s)             = "ret " ++ (showType t) ++ " " ++ s    
     show  VReturn                 = "ret void"
     
     -- MulOps
@@ -88,9 +86,9 @@ instance Show Instruction where
     show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
                                     id1 ++ ", " ++ id2
 
--- toLType converts Javalette types to LLVM types
-toLType :: Type -> String
-toLType t = case t of
+-- showType converts Javalette types to LLVM types
+showType :: Type -> String
+showType t = case t of
     TInt    -> "i32"
     TDoub   -> "double"
     TBool   -> "i1"
@@ -99,18 +97,13 @@ toLType t = case t of
 
 showTypes :: [Type] -> String
 showTypes []     = ""
-showTypes [t]    = toLType t
-showTypes (t:ts) = toLType t ++ ", " ++ showTypes ts 
-
-showArr :: Type -> [String] -> String
-showArr t []     = ""
-showArr t [s]    = toLType t ++ " " ++ s
-showArr t (s:ss) = toLType t ++ " " ++ s ++ ", " ++ showArr t ss
+showTypes [t]    = showType t
+showTypes (t:ts) = showType t ++ ", " ++ showTypes ts 
 
 showArgs :: [(Type, String)] -> String
 showArgs []            = ""
-showArgs [(t, s)]      = (toLType t) ++ " " ++ s
-showArgs ((t, s):args) = (toLType t) ++ " " ++ s ++ ", " ++ showArgs args
+showArgs [(t, s)]      = (showType t) ++ " " ++ s
+showArgs ((t, s):args) = (showType t) ++ " " ++ s ++ ", " ++ showArgs args
 
 showIRelOp :: RelOp -> String
 showIRelOp Lt   = "slt"

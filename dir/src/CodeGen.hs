@@ -39,12 +39,12 @@ emitText str = emit $ Text str
 convertFuncArgs :: [Arg] -> State Env String
 convertFuncArgs []               = return ")"
 convertFuncArgs [(DArg t id)]    = do
-    (Ident llvmId) <- extendVar id
-    return $ (toLType t) ++ " " ++ llvmId ++ ")"
+    (Ident llvmId) <- extendVar id "t"
+    return $ (showType t) ++ " " ++ llvmId ++ ")"
 convertFuncArgs ((DArg t id):as) = do
-    (Ident llvmId) <- extendVar id
+    (Ident llvmId) <- extendVar id "t"
     remainder      <- convertFuncArgs as
-    return $ (toLType t) ++ " " ++ llvmId ++ " , " ++ remainder
+    return $ (showType t) ++ " " ++ llvmId ++ " , " ++ remainder
 
 
 emitFuncArgs :: [Arg] -> State Env ()
@@ -85,7 +85,7 @@ compileDef (FnDef rt id@(Ident str) args (DBlock ss)) = do
     argStr <- convertFuncArgs args
 
     emitBlank
-    emitText $ "define " ++ (toLType rt) ++ " @" ++ str ++ "(" ++ argStr ++ " {"
+    emitText $ "define " ++ (showType rt) ++ " @" ++ str ++ "(" ++ argStr ++ " {"
     emit $ Label "entry"
     emitFuncArgs args
     
@@ -128,7 +128,8 @@ compileStm (SAss (Ident str) e@(EType t _)) = do
 
 -- renameStm env (SArrAss id e1 e2) 
 
---compileStm (SNewArrAss id t e)  = 
+compileStm (SNewArrAss id t e)  = return ()                         -- TODO
+    -- TODO: give it a length, insert default values
 
 compileStm (SIncr jId)          = compileStm $ SAss jId $ EType TInt $ 
                                     EAdd (EType TInt (EVar jId)) Plus (ELit (LInt 1)) 
@@ -180,23 +181,31 @@ compileStm (SExp e)             = do
 -- (default values for the ones that don't have a user defined init value).
 compileItems :: Type -> [Item] -> State Env ()
 compileItems _ []                  = return ()
+compileItems at@(TArr t) ((IDecl id@(Ident s)):is) = do
+    (Ident arr) <- extendVar id "arr"
+    (Ident sarr) <- newLocVar "arrStruct"
+    --emit $ Alloca at s ?
+    emitHeader $ CreateArr arr sarr t
+    -- TODO: give it a length and default values
+    compileItems at is
 compileItems t ((IDecl id@(Ident s)):is)     = do
-    extendVar id
+    extendVar id "t"
     emit $ Alloca t s
     defaultValue t s
     compileItems t is
 compileItems t ((IInit id@(Ident s) exp):is) = do
-    extendVar id
+    extendVar id "t"
     emit $ Alloca t s
     compileStm $ SAss id exp
     compileItems t is
-    {-
 compileItems at ((IArrInit id@(Ident s) t exp):is) = do
-    extendVar id
-    -- do some alloc?
+    (Ident arr) <- extendVar id "arr"
+    (Ident sarr) <- newLocVar "arrStruct"
+    --emit $ Alloca at s ?
+    emitHeader $ CreateArr arr sarr t
     compileStm $ SNewArrAss id t exp
     compileItems at is
--}
+
 -- defaultValue is an auxiliary function to compileItems. It gives the given
 -- Javalette variable a default value and stores it.
 defaultValue :: Type -> String -> State Env ()
@@ -218,7 +227,7 @@ compileExps (e:es) = do
 -- compileExp compiles an expression with pattern matching
 compileExp :: Exp -> State Env String
 compileExp (EType t (EVar id@(Ident jId))) = do
-    (Ident lId) <- extendVar id
+    (Ident lId) <- extendVar id "t"
     emit $ Load lId t jId
     return lId
     
@@ -235,7 +244,7 @@ compileExp (EApp id@(Ident name) es) = case name of
         let len = (length str) + 1
         emitHeader $ GlobStr gVar len str
         
-        (Ident lVar) <- newVar
+        (Ident lVar) <- newLocVar "t"
         emit $ GetElemPtr lVar len gVar
         
         emitText $ "call void @printString(i8* " ++ lVar ++ ")"
@@ -251,7 +260,7 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ VFuncCall TVoid ('@':name) args
                 return ""
             _     -> do
-                (Ident ret) <- newVar
+                (Ident ret) <- newLocVar "t"
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
@@ -261,14 +270,14 @@ compileExp (EType t (ENeg e)) = case t of
 
 compileExp (ENot e) = do  
     str          <- compileExp e
-    (Ident res)  <- newVar
+    (Ident res)  <- newLocVar "t"
     emit $ BCmp res Eq str "false"
     return res
 
 compileExp (EType t (EMul e1 op e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
-    (Ident res) <- newVar
+    (Ident res) <- newLocVar "t"
     case (op, t) of
         (Times, TInt)   -> emit $ IMul res str1 str2
         (Times, TDoub)  -> emit $ FMul res str1 str2
@@ -280,7 +289,7 @@ compileExp (EType t (EMul e1 op e2)) = do
 compileExp (EType t (EAdd e1 op e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
-    (Ident res) <- newVar
+    (Ident res) <- newLocVar "t"
     case (op, t) of
         (Plus, TInt)    -> emit $ IAdd res str1 str2
         (Plus, TDoub)   -> emit $ FAdd res str1 str2
@@ -291,7 +300,7 @@ compileExp (EType t (EAdd e1 op e2)) = do
 compileExp (ERel e1@(EType t _) op e2) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
-    (Ident res) <- newVar
+    (Ident res) <- newLocVar "t"
     case t of
         TInt    -> emit $ ICmp res op str1 str2
         TDoub   -> emit $ FCmp res op str1 str2
@@ -310,8 +319,8 @@ compileAndOr op e1 e2 = do
     lFalse          <- newLabel
     lEnd            <- newLabel
     str1            <- compileExp e1
-    rId@(Ident res) <- newVar
-    extendVar rId
+    rId@(Ident res) <- newLocVar "t"
+    extendVar rId "t"
     emit $ Alloca TBool res
     emit $ Br2 str1 lTrue lFalse
     emit $ Label lTrue
@@ -329,7 +338,7 @@ compileAndOr op e1 e2 = do
             emit $ Store TBool str2 res 
     emit $ Br1 lEnd
     emit $ Label lEnd
-    (Ident res') <- newVar
+    (Ident res') <- newLocVar "t"
     emit $ Load res' TBool res
     return res'
 

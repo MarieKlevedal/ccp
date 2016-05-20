@@ -36,7 +36,7 @@ check file = do
         Bad err  -> hPutStr stderr ("ERROR\n" ++ err ++ "\n") >> exitFailure
         Ok  tree -> do
             compileCode file tree
-            hPutStr stderr ("OK\n" ++ printTree tree) >> exitSuccess
+            hPutStr stderr "OK\n" >> exitSuccess
 
 check' :: String -> Err Program
 check' s = do

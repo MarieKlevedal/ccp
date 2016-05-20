@@ -1,5 +1,5 @@
 int main(){
-    printString("abc");
+    int[] xs;
     return 0;
 }
 

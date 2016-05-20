@@ -10,3 +10,4 @@ rm test.ll
 rm test.bc
 ./jlc test.jl
 
+cat test.ll

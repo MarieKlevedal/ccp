@@ -26,13 +26,13 @@ newLabel = do
     modify (\env -> env{labelCounter = l+1})
     return $ "label" ++ show l
 
--- newVar returns the next free variable name and increases varCounter by 1
-newVar :: State Env Ident
-newVar = do
+-- newLocVar returns the next free variable name and increases varCounter by 1
+newLocVar :: String -> State Env Ident
+newLocVar s = do
     env <- get
     let v = varCounter env
     modify (\env -> env{varCounter = (v+1)})
-    return $ Ident $ "%t" ++ show v
+    return $ Ident $ "%" ++ s ++ show v
     
 newGlobVar :: State Env Ident
 newGlobVar = do
@@ -59,9 +59,9 @@ lookupFun id = do
 
 
 -- extendVar maps a Javalette variable to a LLVM variable name
-extendVar :: Ident -> State Env Ident
-extendVar id = do
-    var <- newVar
+extendVar :: Ident -> String -> State Env Ident
+extendVar id lId = do
+    var <- newLocVar lId
     env <- get
     modify (\env -> env{vars = M.insert id var (vars env)})
     return var
