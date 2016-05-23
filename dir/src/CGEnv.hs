@@ -57,7 +57,6 @@ lookupFun id = do
         Just t   -> return t
         Nothing  -> error $ "no function with id " ++ printTree id ++ " in the environment.\n"
 
-
 -- extendVar maps a Javalette variable to a LLVM variable name
 extendVar :: Ident -> String -> State Env Ident
 extendVar id lId = do

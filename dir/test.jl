@@ -1,5 +1,7 @@
 int main(){
-    int[] xs;
+    int[] xs = new int[5];
+    int[] ys, zs;
+    printInt(xs.length);
     return 0;
 }
 

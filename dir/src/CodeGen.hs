@@ -69,7 +69,11 @@ compileProg (PProg ds) = do
     emitHeader $ FuncDecl TVoid "@printDouble" [TDoub]
     emitHeader $ FuncDecl TInt  "@readInt"     []
     emitHeader $ FuncDecl TDoub "@readDouble"  []
+    emitHeader $ FuncDecl TStr  "@calloc"      [TInt, TInt]
     emitHeader Empty
+    emitHeader $ CreateArr "%intArr"  "%intSArr"  TInt  
+    emitHeader $ CreateArr "%doubArr" "%doubSArr" TDoub
+    emitHeader $ CreateArr "%boolArr" "%boolSArr" TBool
     compileDefs ds 
 
 -- compileDefs takes a list of defs and compiles all of them
@@ -128,8 +132,27 @@ compileStm (SAss (Ident str) e@(EType t _)) = do
 
 -- renameStm env (SArrAss id e1 e2) 
 
-compileStm (SNewArrAss id t e)  = return ()                         -- TODO
-    -- TODO: give it a length, insert default values
+compileStm (SNewArrAss id t e)  = do
+    -- allocate memory on heap for the array and init elems to 0
+    len         <- compileExp e
+    (Ident lId) <- extendVar id "a"
+    emit $ FuncCall lId TStr "@calloc" [(TInt, len), (TInt, (show . size) t)]
+    -- allocate memory on heap for length arrtibute
+    let jId = (\(Ident name) -> name) id
+    let jLen = jId ++ ".length"
+    emit $ Alloca TInt jLen
+    emit $ Store TInt len jLen
+    extendVar (Ident jLen) "t"  -- TODO: remove
+    -- allocate memory on heap for index pointer
+    jVar@(Ident jIdx) <- newLocVar "jIdx"
+    emit $ Alloca TInt jIdx
+    extendVar jVar "lIdx"
+    emit $ Store TInt "0" jIdx
+    return ()
+    where
+        size TInt  = 4
+        size TDoub = 8
+        size TBool = 1
 
 compileStm (SIncr jId)          = compileStm $ SAss jId $ EType TInt $ 
                                     EAdd (EType TInt (EVar jId)) Plus (ELit (LInt 1)) 
@@ -180,29 +203,19 @@ compileStm (SExp e)             = do
 -- variables to be allocated. It alllocates them and gives them init values
 -- (default values for the ones that don't have a user defined init value).
 compileItems :: Type -> [Item] -> State Env ()
-compileItems _ []                  = return ()
-compileItems at@(TArr t) ((IDecl id@(Ident s)):is) = do
-    (Ident arr) <- extendVar id "arr"
-    (Ident sarr) <- newLocVar "arrStruct"
-    --emit $ Alloca at s ?
-    emitHeader $ CreateArr arr sarr t
-    -- TODO: give it a length and default values
-    compileItems at is
-compileItems t ((IDecl id@(Ident s)):is)     = do
+compileItems _ []                                  = return ()
+compileItems at@(TArr t) ((IDecl id@(Ident s)):is) = compileItems at is
+compileItems t ((IDecl id@(Ident s)):is)           = do
     extendVar id "t"
     emit $ Alloca t s
     defaultValue t s
     compileItems t is
-compileItems t ((IInit id@(Ident s) exp):is) = do
+compileItems t ((IInit id@(Ident s) exp):is)       = do
     extendVar id "t"
     emit $ Alloca t s
     compileStm $ SAss id exp
     compileItems t is
 compileItems at ((IArrInit id@(Ident s) t exp):is) = do
-    (Ident arr) <- extendVar id "arr"
-    (Ident sarr) <- newLocVar "arrStruct"
-    --emit $ Alloca at s ?
-    emitHeader $ CreateArr arr sarr t
     compileStm $ SNewArrAss id t exp
     compileItems at is
 
@@ -263,6 +276,15 @@ compileExp (EApp id@(Ident name) es) = case name of
                 (Ident ret) <- newLocVar "t"
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
+            
+{-
+    EArrLen id     -> do    -- id.length    
+    EArrInd id e   -> do    -- id[e]
+-}
+compileExp (EArrLen (Ident id)) = do
+    (Ident len) <- newLocVar "len"
+    emit $ Load len TInt $ id ++ ".length" 
+    return len
             
 compileExp (EType t (ENeg e)) = case t of
     TInt    -> compileExp $ EType t $ EAdd (ELit $ LInt 0) Minus e
