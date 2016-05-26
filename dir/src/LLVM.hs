@@ -86,7 +86,9 @@ instance Show Instruction where
     show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
                                     id1 ++ ", " ++ id2
 
--- showType converts Javalette types to LLVM types
+                                    
+---------------------- Auxiliary show functions --------------------------------
+                                    
 showType :: Type -> String
 showType t = case t of
     TInt    -> "i32"

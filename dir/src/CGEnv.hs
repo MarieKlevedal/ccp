@@ -9,8 +9,7 @@ import LLVM
 
 
 data Env = Env {
-    vars         :: M.Map Ident Ident,    -- map of id1 (in Javalette) + id2 
-                                          -- that points at id1
+    vars         :: M.Map Ident Ident,    -- map of JavaLette variables and LLVM variables
     funcs        :: M.Map Ident Type,     -- map of function id + function type
     varCounter   :: Int,                  -- the next available name for a variable
     labelCounter :: Int,                  -- the next free label number

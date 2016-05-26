@@ -16,35 +16,46 @@ import ReturnChecker
 import AlphaRen
 import CodeGen
 
--- main reads a file and returns its contents as a string input for the
--- check function.
--- If any of the phases report an error, an "ERROR" followed by a newline
--- and a error message is printed to standard error and then exits.
+
+-- main requires one single argument and passes it as argument to compileFile
 main :: IO ()
 main = do
     args <- getArgs
     case args of
-        [file] -> check file
+        [file] -> compileFile file
         _      -> putStrLn "Give Main a file!" >> exitFailure
-      
--- check takes the string representation of the test program as input. It 
--- lexes and parses it into an AST and then typechecks and returnchecks it.
-check :: FilePath -> IO ()
-check file = do
+
+        
+-- compileFile requires a Javalette program file as argument, checks that it is
+-- legal by calling check and then compiles it by calling compileFile. It gives 
+-- an error message and exits with failure if anything goes wrong; otherwise, it
+-- prints OK and exits with success.
+compileFile :: FilePath -> IO ()
+compileFile file = do
     s <- readFile file
-    case check' s of
+    case check s of
         Bad err  -> hPutStr stderr ("ERROR\n" ++ err ++ "\n") >> exitFailure
         Ok  tree -> do
             compileCode file tree
             hPutStr stderr "OK\n" >> exitSuccess
 
-check' :: String -> Err Program
-check' s = do
+            
+-- check takes the string representation of the test program as input. It 
+-- lexes and parses it into an AST and then type checks, return checks and alpha
+-- renames it. If the program passes the tests, an alpha renamed, type annotated
+-- AST is returned; otherwise, an error.
+check :: String -> Err Program
+check s = do
     pTree <- pProgram (myLexer s)
     tTree <- typecheck pTree
     returncheck tTree
     return $ alphaRen tTree
 
+    
+-- copileFile takes a JavaLette program file and an AST represeting the same 
+-- program. It calls codeGen to create LLVM code which it translates to bitcode
+-- format, links it with the runtime file and produces an output file. If 
+-- anything goes wrong, it prints an error and exits with failure.
 compileCode :: FilePath -> Program -> IO ()
 compileCode file prog = do
     let code   = codeGen prog               -- get llvm code (string)

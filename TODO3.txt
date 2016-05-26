@@ -7,7 +7,11 @@ IArrInit id t2 exp          X
 EArrLen id                  X
 EArrInd id e
 
-Gör internal stm for free(a)?
+Uppdatera doc-filen för part C. Skriv bl a vilken extension vi har implementerat
+och hur man kör testfiler. 
+
+
+Gör internal stm för free(a)?
 
 SNewArrAss: Allocera t eller alltid i32? Är det referens till innehållet eller
 längden?

@@ -35,6 +35,8 @@ newCxt env = env{cxts = (M.empty):(cxts env)}
 rmCxt :: Env -> Env
 rmCxt env = env{cxts = tail (cxts env)}
 
+-- addVToEnv gives the given JavaLette variable a correspoding LLVM variable and 
+-- adds the pair to the env.
 addVToEnv :: Env -> Ident -> (Env, Ident)
 addVToEnv env id = (env'', newId) where
     env'   = env{vCount = (vCount env)+1}
@@ -57,15 +59,19 @@ addFToEnv env id                = (env'', newId) where
     f'     = M.insert id newId f
     env''  = env'{funcs = f'}
 
+-- lookupVar returns the correspondig LLVM varible for a given JavaLette variable
 lookupVar :: Env -> Ident -> Ident
 lookupVar env id = searchCxts (cxts env) id
-    
+
+-- searchCxts is an auxiliary function of lookupVar    
 searchCxts :: [Cxt] -> Ident -> Ident
 searchCxts []     id = error $ "variable " ++ printTree id ++ " not in scope"
 searchCxts (c:cs) id = case M.lookup id c of
     Just newId  -> newId
     Nothing     -> searchCxts cs id
 
+-- lookupFun returns the corresponding LLVM function name to a given JavaLette
+-- function name
 lookupFun :: Env -> Ident -> Ident
 lookupFun env id = fromJust $ M.lookup id $ funcs env
 
@@ -81,6 +87,8 @@ renameFuncNames env (d@(FnDef t id as b):oldDs) newDs =
 
 ----------------------------------------------------------------------------
 
+-- alphaRen takes a JavaLette program and returns the program with all variables
+-- and functions renamed
 alphaRen :: Program -> Program
 alphaRen (PProg ds) = PProg newDs'
     where (env, newDs)  = renameFuncNames startEnv ds [] 
@@ -108,13 +116,14 @@ renameArgs env (a@(DArg t id):oldAVs) newAVs = renameArgs env' oldAVs (av':newAV
     where (env', newId) = addVToEnv env id
           av'           = (DArg t newId)
           
-          
+-- renameStms renames all the variables in all the statements of a list          
 renameStms :: Env -> [Stm] -> (Env, [Stm])
 renameStms env []     = (env, [])
 renameStms env (s:ss) = (env'', (s':ss'))
     where (env' , s')  = renameStm env s
           (env'', ss') = renameStms env' ss
 
+-- renameStm renames all variables of a statement
 renameStm :: Env -> Stm -> (Env, Stm)
 renameStm env SEmpty               = (env, SEmpty)
 renameStm env (SBlock (DBlock ss)) = ((rmCxt env'), (SBlock (DBlock ss'))) 
@@ -168,6 +177,7 @@ renameDecl env (item:items) = case item of
               (env'', items') = renameDecl env' items
  
  
+-- renameExp renames all the variables of an expression 
 renameExp :: Env -> Exp -> Exp
 renameExp env (EVar id)       = EVar $ lookupVar env id
 renameExp env (ELit l)        = ELit l

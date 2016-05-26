@@ -24,12 +24,13 @@ type TypeCheckM a = StateT Env Err a
 --------------------------------- ******************* --------------------------------
 
 -- lookVar returns the type of the variable in the topmost (i.e. innermost) context of 
--- the environment in which the variable exist.
+-- the environment in which the variable exists.
 lookVar :: Ident -> TypeCheckM Type
 lookVar id = do
     env <- get
     lookVar' id (cxts env)
-        
+
+-- lookVar' is a helper function to lookVar.
 lookVar' :: Ident -> [Map Ident Type] -> TypeCheckM Type
 lookVar' id []     = fail $ "No variable with id " ++ printTree id ++ " in the environment"
 lookVar' id (c:cs) = case M.lookup id c of
@@ -67,6 +68,7 @@ extendFuncSig id t = do
 newCxt :: TypeCheckM ()
 newCxt = modify (\env -> env{cxts = (M.empty):(cxts env)})
 
+-- rmCxt removes he topmost block/context from the environment
 rmCxt :: TypeCheckM ()
 rmCxt = modify (\env -> env{cxts = tail (cxts env)})
 
@@ -143,8 +145,8 @@ checkStms t (s:ss) = do
     ss' <- checkStms t ss
     return (s':ss')
 
--- checkStm checks that stm is type correct. It returns an updated environment and
--- the statement, with all its sub-expressions type-annotated.
+-- checkStm checks that stm is type correct. It returns the statement, with all 
+-- its sub-expressions type-annotated.
 checkStm :: Type -> Stm -> TypeCheckM Stm
 checkStm rt stm = case stm of
     SEmpty                -> return stm
@@ -224,10 +226,9 @@ checkStm rt stm = case stm of
         te <- inferExp exp
         return (SExp te)
 
--- checkDecl adds all declared and initialized variables to the env and 
--- checks that the expressions in the initilizations are type correct.
--- It returns a tuple of the updated environment and a list of the items,
--- with the expressions of the initializations type-annotated. 
+-- checkDecl adds all declared and initialized variables to the env and checks 
+-- that the expressions in the initilizations are type correct. It returns a 
+-- list of the items, with the expressions of the initializations type-annotated. 
 checkDecl :: Type -> [Item] -> TypeCheckM [Item]
 checkDecl t []           = return []
 checkDecl t (item:items) = case item of
@@ -264,8 +265,8 @@ checkExp t exp = do
         else fail $ "Exp " ++ printTree exp ++ " has incorrect type. Expected type: " ++
             printTree t ++ ". Actual type: " ++ printTree t2
 
--- inferExp either returns the type correct and type annotated expression or an
--- error message.
+-- inferExp infers the type of the given expression and returns the type annotated
+-- expression. If the expression is not type correct, it returns an error message.
 inferExp :: Exp -> TypeCheckM Exp  
 inferExp exp = case exp of
     EVar id        -> do
@@ -277,7 +278,7 @@ inferExp exp = case exp of
     ELit (LDoub _) -> return $ EType TDoub exp
     ELit (LStr _)  -> fail "String literals not allowed outside calls to printString"
     
-    -- Check that the function call has the correct types and return the return
+    -- Check that the function call has the correct types and returns the return
     -- type of the function
     EApp id exps   -> case (\(Ident str) -> str) id of
         "printString" -> case exps of
@@ -345,7 +346,7 @@ inferExp exp = case exp of
         te2 <- checkExp TBool e2
         return $ EType TBool (EOr te1 te2)
 
--- checkArgTypes check that the argument types of a function matches those of the
+-- checkArgTypes check that the argument types of a function match those of the
 -- function signature. It either returns the type annotated, type correct argument
 -- expressions or an error message.
 checkArgTypes :: [Type] -> [Exp] -> TypeCheckM [Exp]
