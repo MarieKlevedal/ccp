@@ -138,31 +138,32 @@ compileStm (SAss (Ident str) e@(EType t _)) = do
 -- compileStm (SArrAss id e1 e2)   = do -- id[e1] = e2
     
 
-compileStm (SNewArrAss id t e)  = do
+compileStm (SNewArrAss id t e)  = do -- id = new t[e]
     -- allocate memory on heap for the array and init elems to 0
     len         <- compileExp e
-    (Ident lId) <- extendVar id "a"
-    emit $ FuncCall lId TStr "@calloc" [(TInt, len), (TInt, (show . size) t)]
-    -- allocate memory on stack for length arrtibute
-    let jId = (\(Ident name) -> name) id
-    let jLen = jId ++ ".length"
-    emit $ Alloca TInt jLen
-    emit $ Store TInt len jLen
+    (Ident t1)  <- newLocVar "t"
+    (Ident t2)  <- newLocVar "t"
+    emit $ GEP_Size t1 t t2
+    (Ident t3)  <- newLocVar "t"
+    emit $ FuncCall t3 TStr "@calloc" [(TInt, len), (TInt, t2)]
+    
+    (Ident lArr) <- extendVar id "arr"
+    emit $ Alloca (TArr t) lArr
+    
+    -- set length
+    (Ident lLen) <- newLocVar "len"
+    emit $ GEP_Length lLen t lArr
+    emit $ Store TInt len lLen
+    
     -- allocate memory on stack for index pointer
+    {-
     jVar@(Ident jIdx) <- newLocVar "jIdx"
     emit $ Alloca TInt jIdx
     extendVar jVar "lIdx"
     emit $ Store TInt "0" jIdx
-    --------------------------
-    -- TODO: remove this block.
-    -- a[3] = 2.0 
-    
-    -------------------------
+    -}
+
     return ()
-    where
-        size TInt  = 4
-        size TDoub = 8
-        size TBool = 1
 
 compileStm (SIncr jId)          = compileStm $ SAss jId $ EType TInt $ 
                                     EAdd (EType TInt (EVar jId)) Plus (ELit (LInt 1)) 
@@ -261,7 +262,7 @@ compileExp (EApp id@(Ident name) es) = case name of
         emitHeader $ GlobStr gVar len str
         
         (Ident lVar) <- newLocVar "t"
-        emit $ GetElemPtr lVar len gVar
+        emit $ GEP_String lVar len gVar
         
         emitText $ "call void @printString(i8* " ++ lVar ++ ")"
         
@@ -280,14 +281,22 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
-compileExp (EArrLen (Ident id)) = do    -- id.length
-    (Ident len) <- newLocVar "len"
-    emit $ Load len TInt $ id ++ ".length" 
-    return len
-    
-{-     
-    EArrInd id e   -> do    -- id[e]
--}
+compileExp (EArrLen id) = do    -- id.length
+    (Ident lArr) <- lookupVar id
+    (Ident len)  <- newLocVar "len"
+    emit $ GEP_Length len TDoub lArr                -- TODO: replace hard code TDoub
+    (Ident res)  <- newLocVar "t"
+    emit $ Load res TInt len
+    return res
+  
+compileExp (EType t (EArrInd id e)) = do    -- id[e]
+    idx          <- compileExp e
+    (Ident lArr) <- lookupVar id
+    (Ident lIdx) <- newLocVar "idx" 
+    emit $ GEP_Index lIdx t lArr idx
+    (Ident ret)  <- newLocVar "t"
+    emit $ Load ret t lIdx
+    return ret
             
 compileExp (EType t (ENeg e)) = case t of
     TInt    -> compileExp $ EType t $ EAdd (ELit $ LInt 0) Minus e

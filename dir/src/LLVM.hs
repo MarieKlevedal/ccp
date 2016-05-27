@@ -10,7 +10,10 @@ data HeaderInstr =
 
 data Instruction =
       Text String
-    | GetElemPtr String Int String
+    | GEP_String String Int String
+    | GEP_Size String Type String
+    | GEP_Length String Type String
+    | GEP_Index String Type String String
     | VFuncCall Type String [(Type, String)]
     | FuncCall String Type String [(Type, String)]
     | Label String
@@ -48,11 +51,18 @@ instance Show HeaderInstr where
 
 instance Show Instruction where
     show (Text s)                 = s
-    show (GetElemPtr lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
+    show (GEP_String lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
                                     " x i8]* " ++ gId ++ ", i32 0, i32 0"
+    show (GEP_Size lId1 t lId2)   = lId1 ++ " = getelementptr " ++ showType t ++ 
+                                    "* null, i32 1\n" ++ lId2 ++ " = ptrtoint " ++
+                                    showType t ++ "* " ++ lId1 ++ " to i32"
+    show (GEP_Length ret t arr)   = ret ++ " = getelementptr " ++ showArrType t ++
+                                    " " ++ arr ++ ", i32 0, i32 0" 
+    show (GEP_Index ret t arr ix) = ret ++ " = getelementptr " ++ showArrType t ++
+                                    " " ++ arr ++ ", i32 0, i32 1, i32 " ++ ix 
     show (VFuncCall t id args)    = "call " ++ (showType t) ++ " " ++ id ++ "(" ++ 
                                     (showArgs args) ++ ")"
-    show (FuncCall ret t id args) = ret ++ " = call " ++ (showType t) ++ " " ++ id ++ 
+    show (FuncCall ret t id args) = ret ++ " = call " ++ showType t ++ " " ++ id ++ 
                                     "(" ++ (showArgs args) ++ ")"
     show (Label s)                = "\n" ++ s ++ ": "
     show (Br1 str)                = "br label %" ++ str
@@ -96,11 +106,19 @@ showType t = case t of
     TBool   -> "i1"
     TStr    -> "i8*"
     TVoid   -> "void"
+    TArr TInt -> "%intSArr"
+    TArr TDoub -> "%doubSArr"
+    TArr TBool -> "%boolSArr"
 
 showTypes :: [Type] -> String
 showTypes []     = ""
 showTypes [t]    = showType t
 showTypes (t:ts) = showType t ++ ", " ++ showTypes ts 
+
+showArrType :: Type -> String
+showArrType TInt  = "%intArr"
+showArrType TDoub = "%doubArr"
+showArrType TBool = "%boolArr"
 
 showArgs :: [(Type, String)] -> String
 showArgs []            = ""

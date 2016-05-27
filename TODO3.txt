@@ -5,13 +5,16 @@ SNewArrAss id t exp         X
 SForEach t id exp stm1
 IArrInit id t2 exp          X
 EArrLen id                  X
-EArrInd id e
+EArrInd id e                X
 
 Uppdatera doc-filen för part C. Skriv bl a vilken extension vi har implementerat
 och hur man kör testfiler. 
 
+OBS OBS OBS OBS: Sluta hårdkoda double i compileExp(Length)
 
-Sätt sizen på typen i arrayen (i calloc) med getelementptr som i lec4.
+Om vi får något index-out-of-bounds-liknande error när vi har stöd för for-each
+kan det bero på att size inte funkar.
+
 
 Gör internal stm för free(a)?
 
