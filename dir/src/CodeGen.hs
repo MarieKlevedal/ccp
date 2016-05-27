@@ -135,24 +135,29 @@ compileStm (SAss (Ident str) e@(EType t _)) = do
     res <- compileExp e
     emit $ Store t res str
 
--- renameStm env (SArrAss id e1 e2) 
+-- compileStm (SArrAss id e1 e2)   = do -- id[e1] = e2
+    
 
 compileStm (SNewArrAss id t e)  = do
     -- allocate memory on heap for the array and init elems to 0
     len         <- compileExp e
     (Ident lId) <- extendVar id "a"
     emit $ FuncCall lId TStr "@calloc" [(TInt, len), (TInt, (show . size) t)]
-    -- allocate memory on heap for length arrtibute
+    -- allocate memory on stack for length arrtibute
     let jId = (\(Ident name) -> name) id
     let jLen = jId ++ ".length"
     emit $ Alloca TInt jLen
     emit $ Store TInt len jLen
-    extendVar (Ident jLen) "t"  -- TODO: remove
-    -- allocate memory on heap for index pointer
+    -- allocate memory on stack for index pointer
     jVar@(Ident jIdx) <- newLocVar "jIdx"
     emit $ Alloca TInt jIdx
     extendVar jVar "lIdx"
     emit $ Store TInt "0" jIdx
+    --------------------------
+    -- TODO: remove this block.
+    -- a[3] = 2.0 
+    
+    -------------------------
     return ()
     where
         size TInt  = 4
@@ -275,14 +280,14 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
-{-
-    EArrLen id     -> do    -- id.length    
-    EArrInd id e   -> do    -- id[e]
--}
-compileExp (EArrLen (Ident id)) = do
+compileExp (EArrLen (Ident id)) = do    -- id.length
     (Ident len) <- newLocVar "len"
     emit $ Load len TInt $ id ++ ".length" 
     return len
+    
+{-     
+    EArrInd id e   -> do    -- id[e]
+-}
             
 compileExp (EType t (ENeg e)) = case t of
     TInt    -> compileExp $ EType t $ EAdd (ELit $ LInt 0) Minus e

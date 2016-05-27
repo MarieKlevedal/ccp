@@ -25,14 +25,16 @@ newLabel = do
     modify (\env -> env{labelCounter = l+1})
     return $ "label" ++ show l
 
--- newLocVar returns the next free variable name and increases varCounter by 1
+-- newLocVar creates a new local variable with a name starting with the given
+-- string and returns it
 newLocVar :: String -> State Env Ident
 newLocVar s = do
     env <- get
     let v = varCounter env
     modify (\env -> env{varCounter = (v+1)})
     return $ Ident $ "%" ++ s ++ show v
-    
+
+-- newGlobVar creates a new global variable, representing a string, and returns it    
 newGlobVar :: State Env Ident
 newGlobVar = do
     env <- get

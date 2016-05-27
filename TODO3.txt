@@ -11,6 +11,8 @@ Uppdatera doc-filen för part C. Skriv bl a vilken extension vi har implementera
 och hur man kör testfiler. 
 
 
+Sätt sizen på typen i arrayen (i calloc) med getelementptr som i lec4.
+
 Gör internal stm för free(a)?
 
 SNewArrAss: Allocera t eller alltid i32? Är det referens till innehållet eller
