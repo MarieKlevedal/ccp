@@ -6,6 +6,7 @@ data HeaderInstr =
       FuncDecl Type String [Type]
     | GlobStr String Int String
     | CreateArr String String Type
+    | HText String  --debugging
     | Empty
 
 data Instruction =
@@ -14,6 +15,7 @@ data Instruction =
     | GEP_Size String Type String
     | GEP_Length String Type String
     | GEP_Index String Type String String
+    | CallBitCast String String Type
     | VFuncCall Type String [(Type, String)]
     | FuncCall String Type String [(Type, String)]
     | Label String
@@ -40,18 +42,19 @@ data Instruction =
     | FCmp String RelOp String String
 
 instance Show HeaderInstr where
-    show (FuncDecl t name ts)     = "declare " ++ (showType t) ++ " " ++ name ++
+    show (HText s)                 = s
+    show (FuncDecl t name ts)     = "declare " ++ showType t ++ " " ++ name ++
                                     "(" ++ showTypes ts ++ ")"
-    show (GlobStr name len s)     = name ++ " = internal constant [" ++ (show len) ++
+    show (GlobStr name len s)     = name ++ " = internal constant [" ++ show len ++
                                     " x i8] c\"" ++ s ++ "\00\""
     show (CreateArr arr sarr t)   = arr ++ " = type " ++ sarr ++ "*\n" ++ 
-                                    sarr ++ " = type {i32, [0 x " ++ (showType t) ++
+                                    sarr ++ " = type {i32, [0 x " ++ showType t ++
                                     "]}"  
     show  Empty                   = ""
 
 instance Show Instruction where
     show (Text s)                 = s
-    show (GEP_String lId len gId) = lId ++ " = getelementptr [" ++ (show len) ++
+    show (GEP_String lId len gId) = lId ++ " = getelementptr [" ++ show len ++
                                     " x i8]* " ++ gId ++ ", i32 0, i32 0"
     show (GEP_Size lId1 t lId2)   = lId1 ++ " = getelementptr " ++ showType t ++ 
                                     "* null, i32 1\n" ++ lId2 ++ " = ptrtoint " ++
@@ -60,19 +63,21 @@ instance Show Instruction where
                                     " " ++ arr ++ ", i32 0, i32 0" 
     show (GEP_Index ret t arr ix) = ret ++ " = getelementptr " ++ showArrType t ++
                                     " " ++ arr ++ ", i32 0, i32 1, i32 " ++ ix 
-    show (VFuncCall t id args)    = "call " ++ (showType t) ++ " " ++ id ++ "(" ++ 
-                                    (showArgs args) ++ ")"
+    show (CallBitCast ret id t)   = ret ++ " = bitcast i8* " ++ id ++ " to " ++
+                                    showArrType t
+    show (VFuncCall t id args)    = "call " ++ showType t ++ " " ++ id ++ "(" ++ 
+                                    showArgs args ++ ")"
     show (FuncCall ret t id args) = ret ++ " = call " ++ showType t ++ " " ++ id ++ 
-                                    "(" ++ (showArgs args) ++ ")"
+                                    "(" ++ showArgs args ++ ")"
     show (Label s)                = "\n" ++ s ++ ": "
     show (Br1 str)                = "br label %" ++ str
     show (Br2 e l1 l2)            = "br i1 " ++ e ++ ", label %" ++ l1 ++ 
                                     ", label %" ++ l2
     show (Alloca t id)            = id ++ " = alloca " ++ showType t 
-    show (Store t lId jId)        = "store " ++ (showType t) ++ " " ++ lId ++ 
-                                    " , " ++ (showType t) ++ "* " ++ jId
-    show (Load lId t jId)         = lId ++ " = load " ++ (showType t) ++ "* " ++ jId
-    show (Return t s)             = "ret " ++ (showType t) ++ " " ++ s    
+    show (Store t lId jId)        = "store " ++ showType t ++ " " ++ lId ++ 
+                                    " , " ++ showType t ++ "* " ++ jId
+    show (Load lId t jId)         = lId ++ " = load " ++ showType t ++ "* " ++ jId
+    show (Return t s)             = "ret " ++ showType t ++ " " ++ s    
     show  VReturn                 = "ret void"
     
     -- MulOps
@@ -89,11 +94,11 @@ instance Show Instruction where
     show (FSub res id1 id2)       = res ++ " = fsub double " ++ id1 ++ " , " ++ id2
 
     -- RelOps
-    show (BCmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i1 " ++
+    show (BCmp res op id1 id2)    = res ++ " = icmp " ++ showIRelOp op ++ " i1 " ++
                                     id1 ++ ", " ++ id2
-    show (ICmp res op id1 id2)    = res ++ " = icmp " ++ (showIRelOp op) ++ " i32 " ++
+    show (ICmp res op id1 id2)    = res ++ " = icmp " ++ showIRelOp op ++ " i32 " ++
                                     id1 ++ ", " ++ id2
-    show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ (showFRelOp op) ++ " double " ++
+    show (FCmp res op id1 id2)    = res ++ " = fcmp " ++ showFRelOp op ++ " double " ++
                                     id1 ++ ", " ++ id2
 
                                     
@@ -122,8 +127,8 @@ showArrType TBool = "%boolArr"
 
 showArgs :: [(Type, String)] -> String
 showArgs []            = ""
-showArgs [(t, s)]      = (showType t) ++ " " ++ s
-showArgs ((t, s):args) = (showType t) ++ " " ++ s ++ ", " ++ showArgs args
+showArgs [(t, s)]      = showType t ++ " " ++ s
+showArgs ((t, s):args) = showType t ++ " " ++ s ++ ", " ++ showArgs args
 
 showIRelOp :: RelOp -> String
 showIRelOp Lt   = "slt"

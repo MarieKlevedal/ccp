@@ -290,8 +290,11 @@ inferExp exp = case exp of
             return $ EType retT (EApp id tes)
     
     EArrLen id     -> do    -- id.length
-        (TArr _) <- lookVar id
-        return $ EType TInt $ EArrLen id
+        (TArr t) <- lookVar id
+        -- The type of a length expression is always TInt. However, the code
+        -- generator is also interested in the type of the elements of the 
+        -- array, hence the nested type annotation.
+        return $ EType TInt $ EType t $ EArrLen id
     
     EArrInd id e   -> do    -- id[e]
         (TArr t) <- lookVar id

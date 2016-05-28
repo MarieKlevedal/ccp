@@ -11,3 +11,4 @@ rm test.bc
 ./jlc test.jl
 
 cat test.ll
+./a.out

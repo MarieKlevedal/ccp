@@ -1,4 +1,4 @@
-Compiler for Javalette, part B, version 1
+Compiler for Javalette, part C, version 1
 -----------------------------------------
 
 Build the compiler by running the command
@@ -8,9 +8,14 @@ in the src/ directory. Remove generated files by running the command
 in the same directory.
 
 Run the compiler with the command
-    ./jlc testfile.jl
-where testfile is a Javalette file.
+    ./jlc test.jl
+where test.jl is a Javalette file. This will produce the files test.ll and
+test.bc in the same directory as test.jl, and the files main.bc, main.o and 
+a.out in the same directory as jlc. a.out holds the output of the program in 
+test.jl.
 
-See the file src/Javalette.cf for specification of the language.
+See the file src/Javalette.cf for specification of the language. The grammar 
+has one shift/reduce conflict: the dangling else.
 
-The grammar has one shift/reduce conflict: the dangling else.
+Implemented extensions:
+  ¤ One-dimensional arrays and for loops 

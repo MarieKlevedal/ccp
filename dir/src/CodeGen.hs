@@ -144,24 +144,21 @@ compileStm (SNewArrAss id t e)  = do -- id = new t[e]
     (Ident t1)  <- newLocVar "t"
     (Ident t2)  <- newLocVar "t"
     emit $ GEP_Size t1 t t2
+    
     (Ident t3)  <- newLocVar "t"
     emit $ FuncCall t3 TStr "@calloc" [(TInt, len), (TInt, t2)]
     
     (Ident lArr) <- extendVar id "arr"
+    emit $ CallBitCast lArr t3 t
+     
+    {-
+    (Ident lArr) <- extendVar id "arr"
     emit $ Alloca (TArr t) lArr
-    
+    -}
     -- set length
     (Ident lLen) <- newLocVar "len"
     emit $ GEP_Length lLen t lArr
     emit $ Store TInt len lLen
-    
-    -- allocate memory on stack for index pointer
-    {-
-    jVar@(Ident jIdx) <- newLocVar "jIdx"
-    emit $ Alloca TInt jIdx
-    extendVar jVar "lIdx"
-    emit $ Store TInt "0" jIdx
-    -}
 
     return ()
 
@@ -281,10 +278,10 @@ compileExp (EApp id@(Ident name) es) = case name of
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
-compileExp (EArrLen id) = do    -- id.length
+compileExp (EType t (EArrLen id)) = do    -- id.length
     (Ident lArr) <- lookupVar id
     (Ident len)  <- newLocVar "len"
-    emit $ GEP_Length len TDoub lArr                -- TODO: replace hard code TDoub
+    emit $ GEP_Length len t lArr
     (Ident res)  <- newLocVar "t"
     emit $ Load res TInt len
     return res

@@ -1,7 +1,5 @@
 int main(){
-    double[] xs = new double[5];
-    double x = xs[3];
-    printDouble(x);
+    boolean[] xs = new boolean[5];
     return 0;
 }
 

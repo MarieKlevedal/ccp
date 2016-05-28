@@ -1,29 +1,29 @@
 TODO
 ----
 SArrAss id e1 e2            
-SNewArrAss id t exp         X
+SNewArrAss id t exp         
 SForEach t id exp stm1
 IArrInit id t2 exp          X
 EArrLen id                  X
 EArrInd id e                X
 
-Uppdatera doc-filen för part C. Skriv bl a vilken extension vi har implementerat
-och hur man kör testfiler. 
-
-OBS OBS OBS OBS: Sluta hårdkoda double i compileExp(Length)
 
 Om vi får något index-out-of-bounds-liknande error när vi har stöd för for-each
 kan det bero på att size inte funkar.
 
+Prova att kommentera bort anropet till calloc för att se om listan vi sedan
+allocerar verkligen använder minnet vi skapar i calloc.
+
+Innehåller Makefile allt som behövs för labb C? Är det något nytt sedan labb B?
+
 
 Gör internal stm för free(a)?
-
-SNewArrAss: Allocera t eller alltid i32? Är det referens till innehållet eller
-längden?
 
 Skapa funktion som anropar newLocVar och en som anropar extendVar, båda med
 inparameter "t".
 
+Tips
+----
 Arrayerna vi använder i LLVM kallas "Pascal style"
 
 How to use calloc:
