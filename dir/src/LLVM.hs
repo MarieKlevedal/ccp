@@ -6,7 +6,6 @@ data HeaderInstr =
       FuncDecl Type String [Type]
     | GlobStr String Int String
     | CreateArr String String Type
-    | HText String  --debugging
     | Empty
 
 data Instruction =
@@ -42,7 +41,6 @@ data Instruction =
     | FCmp String RelOp String String
 
 instance Show HeaderInstr where
-    show (HText s)                 = s
     show (FuncDecl t name ts)     = "declare " ++ showType t ++ " " ++ name ++
                                     "(" ++ showTypes ts ++ ")"
     show (GlobStr name len s)     = name ++ " = internal constant [" ++ show len ++

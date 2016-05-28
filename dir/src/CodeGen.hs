@@ -135,27 +135,32 @@ compileStm (SAss (Ident str) e@(EType t _)) = do
     res <- compileExp e
     emit $ Store t res str
 
--- compileStm (SArrAss id e1 e2)   = do -- id[e1] = e2
-    
+compileStm (SArrAss id e1 te2@(EType t e2))   = do -- id[e1] = e2
+    elem         <- compileExp te2
+    idx          <- compileExp e1
+    (Ident lArr) <- lookupVar id
+    (Ident lIdx) <- newLocVar "idx" 
+    emit $ GEP_Index lIdx t lArr idx
+    --(Ident ret)  <- newLocVar "t"
+    emit $ Store t elem lIdx
+    return ()
 
 compileStm (SNewArrAss id t e)  = do -- id = new t[e]
-    -- allocate memory on heap for the array and init elems to 0
-    len         <- compileExp e
+    -- calculate the size of t
     (Ident t1)  <- newLocVar "t"
     (Ident t2)  <- newLocVar "t"
     emit $ GEP_Size t1 t t2
     
+    -- allocate memory on heap for the array and init elems to 0
+    len         <- compileExp e
     (Ident t3)  <- newLocVar "t"
     emit $ FuncCall t3 TStr "@calloc" [(TInt, len), (TInt, t2)]
     
+    -- bitcast pointer to allocated memory on heap to the array type for t
     (Ident lArr) <- extendVar id "arr"
     emit $ CallBitCast lArr t3 t
-     
-    {-
-    (Ident lArr) <- extendVar id "arr"
-    emit $ Alloca (TArr t) lArr
-    -}
-    -- set length
+
+    -- set length of array
     (Ident lLen) <- newLocVar "len"
     emit $ GEP_Length lLen t lArr
     emit $ Store TInt len lLen

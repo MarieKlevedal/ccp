@@ -1,7 +1,7 @@
 TODO
 ----
-SArrAss id e1 e2            
-SNewArrAss id t exp         
+SArrAss id e1 e2            X
+SNewArrAss id t exp         X
 SForEach t id exp stm1
 IArrInit id t2 exp          X
 EArrLen id                  X
@@ -10,9 +10,6 @@ EArrInd id e                X
 
 Om vi får något index-out-of-bounds-liknande error när vi har stöd för for-each
 kan det bero på att size inte funkar.
-
-Prova att kommentera bort anropet till calloc för att se om listan vi sedan
-allocerar verkligen använder minnet vi skapar i calloc.
 
 Innehåller Makefile allt som behövs för labb C? Är det något nytt sedan labb B?
 
