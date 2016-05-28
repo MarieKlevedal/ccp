@@ -13,6 +13,11 @@ kan det bero på att size inte funkar.
 
 Innehåller Makefile allt som behövs för labb C? Är det något nytt sedan labb B?
 
+Vi har inte stöd för c = a om de är arrayer.
+
+Fixa call-by-value genom att skicka referensen för arrayer i EApp. Löser
+förhoppningsvis problemet ovan och for-each.
+
 
 Gör internal stm för free(a)?
 

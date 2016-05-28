@@ -131,7 +131,11 @@ compileStm (SBlock (DBlock ss)) = compileBlock ss where
 
 compileStm (SDecl t items)      = compileItems t items
 
-compileStm (SAss (Ident str) e@(EType t _)) = do
+compileStm (SAss id1@(Ident str1) e@(EType (TArr t) (EVar id2))) = do -- id1 = id2
+    (Ident lArr) <- lookupVar id2
+    emit $ Store (TArr t) lArr str1
+
+compileStm (SAss (Ident str) e@(EType t _)) = do  -- id = e
     res <- compileExp e
     emit $ Store t res str
 
@@ -145,7 +149,7 @@ compileStm (SArrAss id e1 te2@(EType t e2))   = do -- id[e1] = e2
     emit $ Store t elem lIdx
     return ()
 
-compileStm (SNewArrAss id t e)  = do -- id = new t[e]
+compileStm (SNewArrAss id@(Ident jId) t e)  = do -- id = new t[e]
     -- calculate the size of t
     (Ident t1)  <- newLocVar "t"
     (Ident t2)  <- newLocVar "t"
@@ -159,6 +163,9 @@ compileStm (SNewArrAss id t e)  = do -- id = new t[e]
     -- bitcast pointer to allocated memory on heap to the array type for t
     (Ident lArr) <- extendVar id "arr"
     emit $ CallBitCast lArr t3 t
+
+    --emit $ Text $ "store %intArr " ++ lArr ++ " , %intArr* " ++ jId
+    --emit $ Store (TArr t) lArr jId
 
     -- set length of array
     (Ident lLen) <- newLocVar "len"
@@ -207,6 +214,9 @@ compileStm (SWhile e s)         = do
     compileStm s
     emit $ Br1 lTestPred
     emit $ Label lEnd
+    {-
+compileStm (SForEach t id exp stm1) = do -- for(t id : exp) stm1)
+    -}
 
 compileStm (SExp e)             = do
     compileExp e
@@ -245,6 +255,13 @@ defaultValue t jName = case t of
 ----------------- compileExp compiles an expression ----------------------------
 --------------------------------------------------------------------------------
 compileExp :: Exp -> State Env String
+{-
+compileExp (EType (TArr t) (EVar id))      = do
+    (Ident lArr) <- lookupVar id
+    (Ident res)  <- newLocVar "t"
+    emit $ GEP_Array res t lArr
+    return res
+-}
 compileExp (EType t (EVar id@(Ident jId))) = do
     (Ident lId) <- extendVar id "t"
     emit $ Load lId t jId

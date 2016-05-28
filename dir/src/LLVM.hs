@@ -109,9 +109,9 @@ showType t = case t of
     TBool   -> "i1"
     TStr    -> "i8*"
     TVoid   -> "void"
-    TArr TInt -> "%intSArr"
-    TArr TDoub -> "%doubSArr"
-    TArr TBool -> "%boolSArr"
+    TArr TInt -> "%intArr"
+    TArr TDoub -> "%doubArr"
+    TArr TBool -> "%boolArr"
 
 showTypes :: [Type] -> String
 showTypes []     = ""

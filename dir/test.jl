@@ -1,14 +1,9 @@
 int main () {
-  int lo,hi,mx ;
-  lo = 1 ;
-  hi = lo ;
-  mx = 5000000 ;
-  printInt(lo) ;
-  while (hi < mx) {
-    printInt(hi) ;
-    hi = lo + hi ;
-    lo = hi - lo ;
-  }
+  int[] xs = new int[3];
+  int[] ys = new int[4];
+  ys[2] = 1;
+  printInt(xs[2] + ys[2]);
+  printInt(ys.length);
   return 0 ;
 
 }
