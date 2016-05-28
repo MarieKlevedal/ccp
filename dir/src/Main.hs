@@ -49,7 +49,8 @@ check s = do
     pTree <- pProgram (myLexer s)
     tTree <- typecheck pTree
     returncheck tTree
-    return $ alphaRen tTree
+    aTree <- alphaRen tTree
+    return $ aTree
 
     
 -- copileFile takes a JavaLette program file and an AST represeting the same 

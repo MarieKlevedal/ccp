@@ -1,7 +1,15 @@
-int main(){
-    double[] xs = new double[5];
-    xs[2] = 8.3;
-    printDouble(xs[2]);
-    return 0;
+int main () {
+  int lo,hi,mx ;
+  lo = 1 ;
+  hi = lo ;
+  mx = 5000000 ;
+  printInt(lo) ;
+  while (hi < mx) {
+    printInt(hi) ;
+    hi = lo + hi ;
+    lo = hi - lo ;
+  }
+  return 0 ;
+
 }
 

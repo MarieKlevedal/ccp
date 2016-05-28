@@ -2,10 +2,12 @@ module AlphaRen where
 
 import AbsJavalette
 import PrintJavalette
+import ErrM
 
 import Data.Map
 import qualified Data.Map as M
 import Data.Maybe
+import Control.Monad.State
 
 data Env = Env {
     funcs  :: FuncSig,
@@ -15,6 +17,8 @@ data Env = Env {
 }                  
 type FuncSig = Map Ident Ident
 type Cxt = Map Ident Ident
+
+type AlphaRenM a = StateT Env Err a
 
 ----------------------------------------------------------------------------
 startEnv :: Env
@@ -29,39 +33,51 @@ startEnv = Env {
     vCount = 0
 } 
 
-newCxt  :: Env -> Env
-newCxt env = env{cxts = (M.empty):(cxts env)}
+newCxt :: AlphaRenM ()
+newCxt = modify (\env -> env{cxts = (M.empty):(cxts env)})
 
-rmCxt :: Env -> Env
-rmCxt env = env{cxts = tail (cxts env)}
+rmCxt :: AlphaRenM ()
+rmCxt = modify (\env -> env{cxts = tail (cxts env)})
+
+newVar :: AlphaRenM Ident
+newVar = do
+    env <- get
+    let vc = vCount env
+    let newId  = Ident $ "%v" ++ show vc
+    modify (\env -> env{vCount = (vc+1)})
+    return newId
 
 -- addVToEnv gives the given JavaLette variable a correspoding LLVM variable and 
 -- adds the pair to the env.
-addVToEnv :: Env -> Ident -> (Env, Ident)
-addVToEnv env id = (env'', newId) where
-    env'   = env{vCount = (vCount env)+1}
-    newId  = Ident $ "%v" ++ show (vCount env')
-    (c:cs) = cxts env'
-    c'     = M.insert id newId c
-    env''  = env'{cxts = (c':cs)}
+addVToEnv :: Ident -> AlphaRenM Ident
+addVToEnv id = do
+    newId <- newVar
+    env <- get
+    let (c:cs) = cxts env
+    modify (\env -> env{cxts = (M.insert id newId c):cs})
+    return newId
 
 -- addFToEnv maps the given (old) id to the next free function id. The "main"
 -- function keeps its old name.
-addFToEnv :: Env -> Ident -> (Env, Ident)
-addFToEnv env id@(Ident "main") = (env', id) where
-    f      = funcs env
-    f'     = M.insert id id f
-    env'  = env{funcs = f'}
-addFToEnv env id                = (env'', newId) where
-    env'   = env{fCount = (fCount env)+1}
-    newId  = Ident $ "f" ++ show (fCount env')
-    f      = funcs env'
-    f'     = M.insert id newId f
-    env''  = env'{funcs = f'}
+addFToEnv :: Ident -> AlphaRenM Ident
+addFToEnv id@(Ident "main") = do
+    env <- get
+    modify (\env -> env{funcs = M.insert id id (funcs env)})
+    return id
+addFToEnv id                = do
+    env <- get
+    let fc = fCount env
+    let newId  = Ident $ "f" ++ show fc
+    modify (\env -> env{fCount = (fc+1)})
+    modify (\env -> env{funcs = M.insert id newId (funcs env)})
+    return newId
 
 -- lookupVar returns the correspondig LLVM varible for a given JavaLette variable
-lookupVar :: Env -> Ident -> Ident
-lookupVar env id = searchCxts (cxts env) id
+lookupVar :: Ident -> AlphaRenM Ident
+lookupVar id = do
+    env <- get
+    let newId = searchCxts (cxts env) id
+    return newId
 
 -- searchCxts is an auxiliary function of lookupVar    
 searchCxts :: [Cxt] -> Ident -> Ident
@@ -72,127 +88,203 @@ searchCxts (c:cs) id = case M.lookup id c of
 
 -- lookupFun returns the corresponding LLVM function name to a given JavaLette
 -- function name
-lookupFun :: Env -> Ident -> Ident
-lookupFun env id = fromJust $ M.lookup id $ funcs env
-
+lookupFun :: Ident -> AlphaRenM Ident
+lookupFun id = do
+    env <- get
+    let newId = fromJust $ M.lookup id $ funcs env
+    return newId
+    
 ----------------------------------------------------------------------------
 
 -- renameFuncNames renames the function names
-renameFuncNames :: Env -> [Def] -> [Def] -> (Env, [Def])
-renameFuncNames env []                          newDs = (env, newDs)
-renameFuncNames env (d@(FnDef t id as b):oldDs) newDs = 
-    renameFuncNames env' oldDs (d':newDs)
-        where (env', newId) = addFToEnv env id 
-              d'            = (FnDef t newId as b)
+renameFuncNames :: [Def] -> [Def] -> AlphaRenM [Def]
+renameFuncNames []                          newDs = return newDs
+renameFuncNames (d@(FnDef t id as b):oldDs) newDs = do
+    newId <- addFToEnv id
+    let d' = (FnDef t newId as b)
+    renameFuncNames oldDs (d':newDs)
 
 ----------------------------------------------------------------------------
 
 -- alphaRen takes a JavaLette program and returns the program with all variables
 -- and functions renamed
-alphaRen :: Program -> Program
-alphaRen (PProg ds) = PProg newDs'
-    where (env, newDs)  = renameFuncNames startEnv ds [] 
-          (_  , newDs') = renameDefs env (reverse newDs)
-
+alphaRen :: Program -> Err Program
+alphaRen (PProg ds) = do
+    (ds', _) <- runStateT ((renameFuncNames ds []) >>= (renameDefs . reverse)) startEnv
+    return $ PProg ds'
 
 -- renameDefs renames all the variables in every def
-renameDefs :: Env -> [Def] -> (Env, [Def])
-renameDefs env []     = (env, [])
-renameDefs env (d:ds) = (env'', (d':ds'))
-    where (env' , d')  = renameDef env d
-          (env'', ds') = renameDefs env' ds
+renameDefs :: [Def] -> AlphaRenM [Def]
+renameDefs []     = return []
+renameDefs (d:ds) = do
+    d'  <- renameDef d
+    ds' <- renameDefs ds
+    return (d':ds')
 
 -- renameDef renames all the variables in the def
-renameDef :: Env -> Def -> (Env, Def)
-renameDef env d@(FnDef t id as b@(DBlock ss)) = 
-    ((rmCxt env''), (FnDef t id (reverse as') (DBlock ss')))
-        where (env' , as') = renameArgs (newCxt env) as []
-              (env'', ss') = renameStms env' ss
+renameDef :: Def -> AlphaRenM Def
+renameDef d@(FnDef t id as b@(DBlock ss)) = do
+    newCxt
+    as' <- renameArgs as []
+    ss' <- renameStms ss
+    rmCxt
+    return $ FnDef t id (reverse as') (DBlock ss')
+
 
 -- renameArgs renames the arguments of a function
-renameArgs :: Env -> [Arg] -> [Arg] -> (Env, [Arg])
-renameArgs env []                     newAVs = (env, newAVs)
-renameArgs env (a@(DArg t id):oldAVs) newAVs = renameArgs env' oldAVs (av':newAVs)
-    where (env', newId) = addVToEnv env id
-          av'           = (DArg t newId)
+renameArgs :: [Arg] -> [Arg] -> AlphaRenM [Arg]
+renameArgs []                     newAVs = return newAVs
+renameArgs (a@(DArg t id):oldAVs) newAVs = do
+    newId <- addVToEnv id
+    let av' = DArg t newId
+    renameArgs oldAVs (av':newAVs)
           
 -- renameStms renames all the variables in all the statements of a list          
-renameStms :: Env -> [Stm] -> (Env, [Stm])
-renameStms env []     = (env, [])
-renameStms env (s:ss) = (env'', (s':ss'))
-    where (env' , s')  = renameStm env s
-          (env'', ss') = renameStms env' ss
+renameStms :: [Stm] -> AlphaRenM [Stm]
+renameStms []     = return []
+renameStms (s:ss) = do
+    s'  <- renameStm s
+    ss' <- renameStms ss
+    return (s':ss')
 
 -- renameStm renames all variables of a statement
-renameStm :: Env -> Stm -> (Env, Stm)
-renameStm env SEmpty               = (env, SEmpty)
-renameStm env (SBlock (DBlock ss)) = ((rmCxt env'), (SBlock (DBlock ss'))) 
-    where (env', ss') = renameStms (newCxt env) ss
-renameStm env (SDecl t items)      = (env', (SDecl t items'))
-    where (env', items') = renameDecl env items
-renameStm env (SAss id exp)        = (env, (SAss id' exp'))
-    where id'  = lookupVar env id
-          exp' = renameExp env exp
-renameStm env (SArrAss id e1 e2)   = (env, (SArrAss id' e1' e2')) -- id[e1] = e2
-    where id' = lookupVar env id
-          e1' = renameExp env e1
-          e2' = renameExp env e2
-renameStm env (SNewArrAss id t e)  = (env, (SNewArrAss id' t e')) -- id = new t[e]
-    where id' = lookupVar env id
-          e'  = renameExp env e
-renameStm env (SIncr id)           = (env, (SIncr (lookupVar env id))) 
-renameStm env (SDecr id)           = (env, (SDecr (lookupVar env id))) 
-renameStm env (SRet exp)           = (env, (SRet (renameExp env exp)))
-renameStm env SVRet                = (env, SVRet)
-renameStm env (SIf exp s)          = (env', (SIf exp' s'))
-    where exp'       = renameExp env exp
-          (env', s') = renameStm env s
-renameStm env (SIfElse exp s1 s2)  = (env'', (SIfElse exp' s1' s2'))
-    where exp'         = renameExp env exp
-          (env' , s1') = renameStm env s1
-          (env'', s2') = renameStm env' s2
-renameStm env (SWhile exp s)       = (env', (SWhile exp' s'))
-    where exp'       = renameExp env exp
-          (env', s') = renameStm env s
-renameStm env (SForEach t id e s)  = ((rmCxt env''), (SForEach t id' e' s')) 
-    -- for(t id : e) s
-    where (env', id') = addVToEnv (newCxt env) id
-          e'          = renameExp env' e
-          (env'', s') = renameStm env' s
-renameStm env (SExp exp)           = (env, (SExp (renameExp env exp)))
+renameStm :: Stm -> AlphaRenM Stm
+
+renameStm SEmpty               = return SEmpty
+
+renameStm (SBlock (DBlock ss)) = do
+    newCxt
+    ss' <- renameStms ss
+    rmCxt
+    return $ SBlock $ DBlock ss'   
+     
+renameStm (SDecl t items)      = do 
+    items' <- renameDecl items
+    return $ SDecl t items'
+    
+renameStm (SAss id exp)        = do 
+    id'  <- lookupVar id
+    exp' <- renameExp exp
+    return $ SAss id' exp'      
+          
+renameStm (SArrAss id e1 e2)   = do  -- id[e1] = e2
+    id' <- lookupVar id
+    e1' <- renameExp e1
+    e2' <- renameExp e2
+    return $ SArrAss id' e1' e2'
+          
+renameStm (SNewArrAss id t e)  = do  -- id = new t[e]
+    id' <- lookupVar id
+    e'  <- renameExp e
+    return $ SNewArrAss id' t e'
+    
+renameStm (SIncr id)           = do
+    id' <- lookupVar id
+    return $ SIncr id'
+
+renameStm (SDecr id)           = do
+    id' <- lookupVar id
+    return $ SDecr id'
+
+renameStm (SRet exp)           = do
+    exp' <- renameExp exp
+    return $ SRet exp'
+
+renameStm SVRet                = return SVRet
+
+renameStm (SIf exp s)          = do 
+    exp' <- renameExp  exp
+    s'   <- renameStm  s
+    return $ SIf exp' s'
+    
+renameStm (SIfElse exp s1 s2)  = do
+    exp' <- renameExp exp
+    s1'  <- renameStm s1
+    s2'  <- renameStm s2
+    return $ SIfElse exp' s1' s2'
+    
+renameStm (SWhile exp s)       = do 
+    exp' <- renameExp  exp
+    s'   <- renameStm  s
+    return $ SWhile exp' s'
+          
+renameStm (SForEach t id e s)  = do -- for(t id : e) s
+    newCxt
+    id' <- addVToEnv id
+    e'  <- renameExp e
+    s'  <- renameStm s
+    rmCxt
+    return $ SForEach t id' e' s'
+          
+renameStm (SExp exp)           = do
+    exp' <- renameExp exp
+    return  $ SExp exp'
+
  
-renameDecl :: Env -> [Item] -> (Env, [Item])
-renameDecl env []           = (env, [])
-renameDecl env (item:items) = case item of
-    (IDecl id)          -> (env'', (IDecl id'):items')
-        where (env' , id')    = addVToEnv env id
-              (env'', items') = renameDecl env' items
-    (IInit id exp)      -> (env'', (IInit id' exp'):items')
-        where exp'            = renameExp env exp
-              (env' , id')    = addVToEnv env id
-              (env'', items') = renameDecl env' items
-    (IArrInit id t exp) -> (env'', (IArrInit id' t exp'):items') -- id = new t [exp]
-        where exp'            = renameExp env exp
-              (env' , id')    = addVToEnv env id
-              (env'', items') = renameDecl env' items
+renameDecl :: [Item] -> AlphaRenM [Item]
+renameDecl []           = return []
+renameDecl (item:items) = case item of
+    IDecl id          -> do
+        id'    <- addVToEnv id
+        items' <- renameDecl items
+        return $ (IDecl id'):items'
+    IInit id exp      -> do
+        exp'   <- renameExp exp
+        id'    <- addVToEnv id
+        items' <- renameDecl items
+        return $ (IInit id' exp'):items'
+    IArrInit id t exp -> do  -- id = new t [exp]
+        exp'   <- renameExp exp
+        id'    <- addVToEnv id
+        items' <- renameDecl items
+        return $ (IArrInit id' t exp'):items'
  
  
 -- renameExp renames all the variables of an expression 
-renameExp :: Env -> Exp -> Exp
-renameExp env (EVar id)       = EVar $ lookupVar env id
-renameExp env (ELit l)        = ELit l
-renameExp env (EApp id es)    = EApp id' es'
-    where id' = lookupFun env id
-          es' = Prelude.map (\e -> renameExp env e) es
-renameExp env (EArrLen id)    = EArrLen $ lookupVar env id    -- id.length
-renameExp env (EArrInd id e)  = EArrInd (lookupVar env id) (renameExp env e) -- id[e]
-renameExp env (ENeg e)        = ENeg $ renameExp env e
-renameExp env (ENot e)        = ENot $ renameExp env e
-renameExp env (EMul e1 op e2) = EMul (renameExp env e1) op (renameExp env e2)
-renameExp env (EAdd e1 op e2) = EAdd (renameExp env e1) op (renameExp env e2)
-renameExp env (ERel e1 op e2) = ERel (renameExp env e1) op (renameExp env e2)
-renameExp env (EAnd e1 e2)    = EAnd (renameExp env e1) (renameExp env e2)
-renameExp env (EOr e1 e2)     = EOr (renameExp env e1) (renameExp env e2)
-renameExp env (EType t e)     = EType t $ renameExp env e
+renameExp :: Exp -> AlphaRenM Exp
+renameExp (EVar id)       = do
+    id' <- lookupVar id
+    return $ EVar $ id'
+renameExp (ELit l)        = return $ ELit l
+renameExp (EApp id es)    = do 
+    id' <- lookupFun id
+    es' <- mapM (\e -> renameExp e) es
+    return $ EApp id' es'
+renameExp (EArrLen id)    = do -- id.length
+    id' <- lookupVar id
+    return $ EArrLen id'    
+renameExp (EArrInd id e)  = do -- id[e]
+    id' <- lookupVar id
+    e'  <- renameExp e
+    return $ EArrInd id' e' 
+renameExp (ENeg e)        = do
+    e' <- renameExp e
+    return $ ENeg e'
+renameExp (ENot e)        = do
+    e' <- renameExp e
+    return $ ENot e'
+renameExp (EMul e1 op e2) = do
+    e1' <- renameExp e1
+    e2' <- renameExp e2
+    return $ EMul e1' op e2'
+renameExp (EAdd e1 op e2) = do
+    e1' <- renameExp e1
+    e2' <- renameExp e2
+    return $ EAdd e1' op e2'
+renameExp (ERel e1 op e2) = do
+    e1' <- renameExp e1
+    e2' <- renameExp e2
+    return $ ERel e1' op e2'
+renameExp (EAnd e1 e2)    = do
+    e1' <- renameExp e1
+    e2' <- renameExp e2
+    return $ EAnd e1' e2'
+renameExp (EOr e1 e2)     = do
+    e1' <- renameExp e1
+    e2' <- renameExp e2
+    return $ EOr e1' e2'
+renameExp (EType t e)     = do
+    e' <- renameExp e
+    return $ EType t e'
 
 
