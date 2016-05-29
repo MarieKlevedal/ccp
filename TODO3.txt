@@ -2,22 +2,17 @@ TODO
 ----
 SArrAss id e1 e2            X
 SNewArrAss id t exp         X
-SForEach t id exp stm1
+SForEach t id exp stm1      X
 IArrInit id t2 exp          X
 EArrLen id                  X
 EArrInd id e                X
 
 
-Om vi får något index-out-of-bounds-liknande error när vi har stöd för for-each
-kan det bero på att size inte funkar.
 
+
+TODO när allt allnat är klart
+-----------------------------
 Innehåller Makefile allt som behövs för labb C? Är det något nytt sedan labb B?
-
-Vi har inte stöd för c = a om de är arrayer.
-
-Fixa call-by-value genom att skicka referensen för arrayer i EApp. Löser
-förhoppningsvis problemet ovan och for-each.
-
 
 Gör internal stm för free(a)?
 

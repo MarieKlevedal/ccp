@@ -17,31 +17,6 @@ data Env = Env {
     code         :: [Instruction]         -- list of instructions to execute
 }
 
--- newLabel returns a new label and increases labelCounter by 1
-newLabel :: State Env String
-newLabel = do
-    env <- get
-    let l = labelCounter env
-    modify (\env -> env{labelCounter = l+1})
-    return $ "label" ++ show l
-
--- newLocVar creates a new local variable with a name starting with the given
--- string and returns it
-newLocVar :: String -> State Env Ident
-newLocVar s = do
-    env <- get
-    let v = varCounter env
-    modify (\env -> env{varCounter = (v+1)})
-    return $ Ident $ "%" ++ s ++ show v
-
--- newGlobVar creates a new global variable, representing a string, and returns it    
-newGlobVar :: State Env Ident
-newGlobVar = do
-    env <- get
-    let v = varCounter env
-    modify (\env -> env{varCounter = (v+1)})
-    return $ Ident $ "@s" ++ show v
-
 -- lookupVar returns the corresponding LLVM variable of a given Javalette variable
 lookupVar :: Ident -> State Env Ident
 lookupVar id = do
@@ -58,19 +33,55 @@ lookupFun id = do
         Just t   -> return t
         Nothing  -> error $ "no function with id " ++ printTree id ++ " in the environment.\n"
 
+-- newGlobVar creates a new global variable, representing a string, and returns it    
+newGlobVar :: State Env Ident
+newGlobVar = do
+    env <- get
+    let v = varCounter env
+    modify (\env -> env{varCounter = (v+1)})
+    return $ Ident $ "@s" ++ show v
+
+-- newLocVar creates a new local variable with a name starting with the given
+-- string and returns it
+newLocVar :: String -> State Env Ident
+newLocVar s = do
+    env <- get
+    let v = varCounter env
+    modify (\env -> env{varCounter = (v+1)})
+    return $ Ident $ "%" ++ s ++ show v
+
 -- extendVar maps a Javalette variable to a LLVM variable name
 extendVar :: Ident -> String -> State Env Ident
 extendVar id lId = do
     var <- newLocVar lId
-    env <- get
     modify (\env -> env{vars = M.insert id var (vars env)})
     return var
 
+-- updateVar updates the LLVM variable of the given JavaLette varaible to the
+-- given LLVM variable
+updateVar :: Ident -> Ident -> State Env ()
+updateVar jId lId =
+    modify (\env -> env{vars = M.insert jId lId (vars env)})
+
 -- extendFun adds a new function to the the environment
 extendFun :: Ident -> Type -> State Env ()
-extendFun id t = do
-    env <- get
+extendFun id t = 
     modify (\env -> env{funcs = M.insert id t (funcs env)})
+
+-- newLabel returns a new label and increases labelCounter by 1
+newLabel :: State Env String
+newLabel = do
+    env <- get
+    let l = labelCounter env
+    modify (\env -> env{labelCounter = l+1})
+    return $ "label" ++ show l
+
+-- addDefs takes a list of Defs and adds them to the environment
+addDefs :: [Def] -> State Env ()
+addDefs []                       = return ()
+addDefs ((FnDef t id args _):ds) = do
+    extendFun id $ TFun t $ Prelude.map (\(DArg t _) -> t) args
+    addDefs ds
 
 -- startEnv creates an empty environment with default values 
 startEnv :: Env
@@ -88,10 +99,3 @@ startEnv = Env{
     code            = []
     }
 
--- addDefs takes a list of Defs and adds them to the environment
-addDefs :: [Def] -> State Env ()
-addDefs []                       = return ()
-addDefs ((FnDef t id args _):ds) = do
-    extendFun id $ TFun t $ Prelude.map (\(DArg t _) -> t) args
-    addDefs ds
-        

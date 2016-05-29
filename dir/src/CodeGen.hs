@@ -74,9 +74,9 @@ compileProg (PProg ds) = do
     emitHeader $ FuncDecl TDoub "@readDouble"  []
     emitHeader $ FuncDecl TStr  "@calloc"      [TInt, TInt]
     emitHeader Empty
-    emitHeader $ CreateArr "%intArr"  "%intSArr"  TInt  
-    emitHeader $ CreateArr "%doubArr" "%doubSArr" TDoub
-    emitHeader $ CreateArr "%boolArr" "%boolSArr" TBool
+    emitHeader $ CreateArr "%intArr"  "%intStruct"  TInt  
+    emitHeader $ CreateArr "%doubArr" "%doubStruct" TDoub
+    emitHeader $ CreateArr "%boolArr" "%boolStruct" TBool
     compileDefs ds 
 
 -- compileDefs takes a list of defs and compiles all of them
@@ -131,9 +131,10 @@ compileStm (SBlock (DBlock ss)) = compileBlock ss where
 
 compileStm (SDecl t items)      = compileItems t items
 
-compileStm (SAss id1@(Ident str1) e@(EType (TArr t) (EVar id2))) = do -- id1 = id2
-    (Ident lArr) <- lookupVar id2
-    emit $ Store (TArr t) lArr str1
+compileStm (SAss id@(Ident str) e@(EType at@(TArr _) _)) = do -- id = e (array)
+    res <- compileExp e
+    updateVar id (Ident res) 
+    emit $ Store at res str
 
 compileStm (SAss (Ident str) e@(EType t _)) = do  -- id = e
     res <- compileExp e
@@ -145,7 +146,6 @@ compileStm (SArrAss id e1 te2@(EType t e2))   = do -- id[e1] = e2
     (Ident lArr) <- lookupVar id
     (Ident lIdx) <- newLocVar "idx" 
     emit $ GEP_Index lIdx t lArr idx
-    --(Ident ret)  <- newLocVar "t"
     emit $ Store t elem lIdx
     return ()
 
@@ -163,9 +163,6 @@ compileStm (SNewArrAss id@(Ident jId) t e)  = do -- id = new t[e]
     -- bitcast pointer to allocated memory on heap to the array type for t
     (Ident lArr) <- extendVar id "arr"
     emit $ CallBitCast lArr t3 t
-
-    --emit $ Text $ "store %intArr " ++ lArr ++ " , %intArr* " ++ jId
-    --emit $ Store (TArr t) lArr jId
 
     -- set length of array
     (Ident lLen) <- newLocVar "len"
@@ -214,9 +211,20 @@ compileStm (SWhile e s)         = do
     compileStm s
     emit $ Br1 lTestPred
     emit $ Label lEnd
-    {-
-compileStm (SForEach t id exp stm1) = do -- for(t id : exp) stm1)
-    -}
+
+compileStm (SForEach t x exp stm2) = do                         -- for(t id : exp) stm1
+    xs <- newLocVar "xs"
+    compileStm $ SDecl (TArr t) [IInit xs exp]                  -- t[] xs = e
+    n <- newLocVar "n"
+    i <- newLocVar "i"
+    compileStm $ SDecl TInt [IInit n (EType TInt $ EType t $ EArrLen xs), 
+                             IDecl i]                            -- int n = xs.length, i
+    compileStm $ SDecl t [IDecl x]                                 -- t x
+    let e    = ERel (EType TInt (EVar i)) Lt (EType TInt (EVar n)) -- i < n
+    let stm1 = SAss x $ EType t $ EArrInd xs $ EType TInt $ EVar i -- x = xs[i]
+    let stm3 = SIncr i                                             -- i++
+    compileStm $ SWhile e $ SBlock $ DBlock [stm1, stm2, stm3]
+    return ()
 
 compileStm (SExp e)             = do
     compileExp e
@@ -227,18 +235,23 @@ compileStm (SExp e)             = do
 -- (default values for the ones that don't have a user defined init value).
 compileItems :: Type -> [Item] -> State Env ()
 compileItems _ []                                  = return ()
-compileItems at@(TArr t) ((IDecl id@(Ident s)):is) = compileItems at is
-compileItems t ((IDecl id@(Ident s)):is)           = do
+compileItems at@(TArr _) ((IDecl id@(Ident s)):is) = do     -- t[] id 
+    emit $ Alloca at s
+    -- TODO: store with null? 
+    extendVar id "t"
+    compileItems at is
+compileItems t ((IDecl id@(Ident s)):is)           = do     -- t id
     extendVar id "t"
     emit $ Alloca t s
     defaultValue t s
     compileItems t is
-compileItems t ((IInit id@(Ident s) exp):is)       = do
+compileItems t ((IInit id@(Ident s) exp):is)       = do     -- t id = exp
     extendVar id "t"
     emit $ Alloca t s
     compileStm $ SAss id exp
     compileItems t is
-compileItems at ((IArrInit id@(Ident s) t exp):is) = do
+compileItems at ((IArrInit id@(Ident s) t exp):is) = do     -- t[] id = new t[exp]
+    emit $ Alloca at s
     compileStm $ SNewArrAss id t exp
     compileItems at is
 
@@ -255,13 +268,11 @@ defaultValue t jName = case t of
 ----------------- compileExp compiles an expression ----------------------------
 --------------------------------------------------------------------------------
 compileExp :: Exp -> State Env String
-{-
-compileExp (EType (TArr t) (EVar id))      = do
-    (Ident lArr) <- lookupVar id
-    (Ident res)  <- newLocVar "t"
-    emit $ GEP_Array res t lArr
-    return res
--}
+
+compileExp (EType (TArr t) (EVar id@(Ident jId)))      = do
+    (Ident lId) <- lookupVar id
+    return lId
+
 compileExp (EType t (EVar id@(Ident jId))) = do
     (Ident lId) <- extendVar id "t"
     emit $ Load lId t jId
