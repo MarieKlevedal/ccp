@@ -15,7 +15,7 @@ import Control.Monad.State
 data Env = Env {
     funcs :: Map Ident Type,
     cxts  :: [Map Ident Type]
-    }
+}
 
 type TypeCheckM a = StateT Env Err a
 
@@ -134,7 +134,7 @@ checkDef (FnDef t id args (DBlock stms)) = do
     return $ FnDef t id args (DBlock stms')
 
 
------------------------ checkStms and its auxilary functions ----------------------
+----------------------- checkStms and its auxiliary functions ----------------------
 
 -- checkStms calls checkStm for all statements in one definition block. It returns
 -- all the type correct and type annotated statements.
@@ -252,7 +252,7 @@ checkDecl t (item:items) = case item of
             error $ "array " ++ (printTree id) ++ " of incorrect type"
                 
 
------------------------ checkExp and its auxilary functions -----------------------
+----------------------- checkExp and its auxiliary functions -----------------------
 
 -- checkExp checks that the the expression has the given type. It returns the type
 -- correct and type annotated expression. If it fails it returns a string with an

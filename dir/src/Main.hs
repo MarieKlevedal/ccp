@@ -60,8 +60,8 @@ check s = do
 compileCode :: FilePath -> Program -> IO ()
 compileCode file prog = do
     let code   = codeGen prog               -- get llvm code (string)
-    let llFile = replaceExtension file "ll" -- creates ll file and path to it
-    writeFile llFile code                   -- put compiled code in ll file
+    let llFile = replaceExtension file "ll" -- create .ll file and path to it
+    writeFile llFile code                   -- put compiled code in .ll file
     
     let bcFile = (dropExtension file) ++ ".bc"
     

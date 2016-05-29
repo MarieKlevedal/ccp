@@ -41,10 +41,10 @@ emitText str = emit $ Text str
 convertFuncArgs :: [Arg] -> State Env String
 convertFuncArgs []               = return ")"
 convertFuncArgs [(DArg t id)]    = do
-    (Ident llvmId) <- extendVar id "t"
+    (Ident llvmId) <- extendVar id
     return $ (showType t) ++ " " ++ llvmId ++ ")"
 convertFuncArgs ((DArg t id):as) = do
-    (Ident llvmId) <- extendVar id "t"
+    (Ident llvmId) <- extendVar id
     remainder      <- convertFuncArgs as
     return $ (showType t) ++ " " ++ llvmId ++ " , " ++ remainder
 
@@ -77,14 +77,8 @@ compileProg (PProg ds) = do
     emitHeader $ CreateArr "%intArr"  "%intStruct"  TInt  
     emitHeader $ CreateArr "%doubArr" "%doubStruct" TDoub
     emitHeader $ CreateArr "%boolArr" "%boolStruct" TBool
-    compileDefs ds 
-
--- compileDefs takes a list of defs and compiles all of them
-compileDefs :: [Def] -> State Env ()
-compileDefs []     = return ()
-compileDefs (d:ds) = do
-    compileDef d
-    compileDefs ds
+    mapM compileDef ds 
+    return ()
 
 -- compileDef compiles a definition (i.e. function)
 compileDef :: Def -> State Env ()
@@ -151,17 +145,17 @@ compileStm (SArrAss id e1 te2@(EType t e2))   = do -- id[e1] = e2
 
 compileStm (SNewArrAss id@(Ident jId) t e)  = do -- id = new t[e]
     -- calculate the size of t
-    (Ident t1)  <- newLocVar "t"
-    (Ident t2)  <- newLocVar "t"
+    (Ident t1)  <- newDefVar
+    (Ident t2)  <- newDefVar
     emit $ GEP_Size t1 t t2
     
     -- allocate memory on heap for the array and init elems to 0
     len         <- compileExp e
-    (Ident t3)  <- newLocVar "t"
+    (Ident t3)  <- newDefVar
     emit $ FuncCall t3 TStr "@calloc" [(TInt, len), (TInt, t2)]
     
     -- bitcast pointer to allocated memory on heap to the array type for t
-    (Ident lArr) <- extendVar id "arr"
+    (Ident lArr) <- extendVar id
     emit $ CallBitCast lArr t3 t
 
     -- set length of array
@@ -237,16 +231,15 @@ compileItems :: Type -> [Item] -> State Env ()
 compileItems _ []                                  = return ()
 compileItems at@(TArr _) ((IDecl id@(Ident s)):is) = do     -- t[] id 
     emit $ Alloca at s
-    -- TODO: store with null? 
-    extendVar id "t"
+    extendVar id
     compileItems at is
 compileItems t ((IDecl id@(Ident s)):is)           = do     -- t id
-    extendVar id "t"
+    extendVar id
     emit $ Alloca t s
     defaultValue t s
     compileItems t is
 compileItems t ((IInit id@(Ident s) exp):is)       = do     -- t id = exp
-    extendVar id "t"
+    extendVar id
     emit $ Alloca t s
     compileStm $ SAss id exp
     compileItems t is
@@ -269,12 +262,12 @@ defaultValue t jName = case t of
 --------------------------------------------------------------------------------
 compileExp :: Exp -> State Env String
 
-compileExp (EType (TArr t) (EVar id@(Ident jId)))      = do
+compileExp (EType (TArr t) (EVar id@(Ident jId))) = do
     (Ident lId) <- lookupVar id
     return lId
 
 compileExp (EType t (EVar id@(Ident jId))) = do
-    (Ident lId) <- extendVar id "t"
+    (Ident lId) <- extendVar id
     emit $ Load lId t jId
     return lId
     
@@ -287,11 +280,11 @@ compileExp (ELit l) = case l of
 compileExp (EApp id@(Ident name) es) = case name of
     "printString" -> do
         (Ident gVar) <- newGlobVar
-        let (EType _ (ELit (LStr str))) = head es       -- must be singleton
+        let [EType _ (ELit (LStr str))] = es       -- must be singleton
         let len = (length str) + 1
         emitHeader $ GlobStr gVar len str
         
-        (Ident lVar) <- newLocVar "t"
+        (Ident lVar) <- newDefVar
         emit $ GEP_String lVar len gVar
         
         emitText $ "call void @printString(i8* " ++ lVar ++ ")"
@@ -300,14 +293,14 @@ compileExp (EApp id@(Ident name) es) = case name of
 
     _             -> do
         (TFun rt ats) <- lookupFun id
-        argExps <- compileArgExps es
+        argExps <- mapM compileExp es
         let args = zip ats argExps
         case rt of
             TVoid -> do
                 emit $ VFuncCall TVoid ('@':name) args
                 return ""
             _     -> do
-                (Ident ret) <- newLocVar "t"
+                (Ident ret) <- newDefVar
                 emit $ FuncCall ret rt ('@':name) args
                 return ret
             
@@ -315,7 +308,7 @@ compileExp (EType t (EArrLen id)) = do    -- id.length
     (Ident lArr) <- lookupVar id
     (Ident len)  <- newLocVar "len"
     emit $ GEP_Length len t lArr
-    (Ident res)  <- newLocVar "t"
+    (Ident res)  <- newDefVar
     emit $ Load res TInt len
     return res
   
@@ -324,7 +317,7 @@ compileExp (EType t (EArrInd id e)) = do    -- id[e]
     (Ident lArr) <- lookupVar id
     (Ident lIdx) <- newLocVar "idx" 
     emit $ GEP_Index lIdx t lArr idx
-    (Ident ret)  <- newLocVar "t"
+    (Ident ret)  <- newDefVar
     emit $ Load ret t lIdx
     return ret
             
@@ -334,14 +327,14 @@ compileExp (EType t (ENeg e)) = case t of
 
 compileExp (ENot e) = do  
     str          <- compileExp e
-    (Ident res)  <- newLocVar "t"
+    (Ident res)  <- newDefVar
     emit $ BCmp res Eq str "false"
     return res
 
 compileExp (EType t (EMul e1 op e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
-    (Ident res) <- newLocVar "t"
+    (Ident res) <- newDefVar
     case (op, t) of
         (Times, TInt)   -> emit $ IMul res str1 str2
         (Times, TDoub)  -> emit $ FMul res str1 str2
@@ -353,7 +346,7 @@ compileExp (EType t (EMul e1 op e2)) = do
 compileExp (EType t (EAdd e1 op e2)) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
-    (Ident res) <- newLocVar "t"
+    (Ident res) <- newDefVar
     case (op, t) of
         (Plus, TInt)    -> emit $ IAdd res str1 str2
         (Plus, TDoub)   -> emit $ FAdd res str1 str2
@@ -364,7 +357,7 @@ compileExp (EType t (EAdd e1 op e2)) = do
 compileExp (ERel e1@(EType t _) op e2) = do
     str1        <- compileExp e1
     str2        <- compileExp e2
-    (Ident res) <- newLocVar "t"
+    (Ident res) <- newDefVar
     case t of
         TInt    -> emit $ ICmp res op str1 str2
         TDoub   -> emit $ FCmp res op str1 str2
@@ -377,15 +370,6 @@ compileExp (EOr e1 e2) = compileAndOr "or" e1 e2
 
 compileExp (EType t e) = compileExp e 
 
--- compileArgExps is an auxiliary function to the EApp case in compileExp. It 
--- compiles all expressions in the given list
-compileArgExps :: [Exp] -> State Env [String]
-compileArgExps []     = return []
-compileArgExps (e:es) = do
-    s1 <- compileExp e
-    ss <- compileArgExps es
-    return (s1:ss)
-
 -- compileAndOr is an auxiliary funcion to the EAnd and EOr cases in compileExp
 compileAndOr :: String -> Exp -> Exp -> State Env String
 compileAndOr op e1 e2 = do
@@ -393,8 +377,8 @@ compileAndOr op e1 e2 = do
     lFalse          <- newLabel
     lEnd            <- newLabel
     str1            <- compileExp e1
-    rId@(Ident res) <- newLocVar "t"
-    extendVar rId "t"
+    rId@(Ident res) <- newDefVar
+    extendVar rId 
     emit $ Alloca TBool res
     emit $ Br2 str1 lTrue lFalse
     emit $ Label lTrue
@@ -412,7 +396,7 @@ compileAndOr op e1 e2 = do
             emit $ Store TBool str2 res 
     emit $ Br1 lEnd
     emit $ Label lEnd
-    (Ident res') <- newLocVar "t"
+    (Ident res') <- newDefVar
     emit $ Load res' TBool res
     return res'
 

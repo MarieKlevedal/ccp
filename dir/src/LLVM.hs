@@ -104,12 +104,12 @@ instance Show Instruction where
                                     
 showType :: Type -> String
 showType t = case t of
-    TInt    -> "i32"
-    TDoub   -> "double"
-    TBool   -> "i1"
-    TStr    -> "i8*"
-    TVoid   -> "void"
-    TArr TInt -> "%intArr"
+    TInt       -> "i32"
+    TDoub      -> "double"
+    TBool      -> "i1"
+    TStr       -> "i8*"
+    TVoid      -> "void"
+    TArr TInt  -> "%intArr"
     TArr TDoub -> "%doubArr"
     TArr TBool -> "%boolArr"
 
@@ -119,9 +119,7 @@ showTypes [t]    = showType t
 showTypes (t:ts) = showType t ++ ", " ++ showTypes ts 
 
 showArrType :: Type -> String
-showArrType TInt  = "%intArr"
-showArrType TDoub = "%doubArr"
-showArrType TBool = "%boolArr"
+showArrType t = showType $ TArr t
 
 showArgs :: [(Type, String)] -> String
 showArgs []            = ""

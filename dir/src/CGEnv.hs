@@ -41,6 +41,10 @@ newGlobVar = do
     modify (\env -> env{varCounter = (v+1)})
     return $ Ident $ "@s" ++ show v
 
+-- newDefVar creates a new local variable with default name t
+newDefVar :: State Env Ident
+newDefVar = newLocVar "t"
+
 -- newLocVar creates a new local variable with a name starting with the given
 -- string and returns it
 newLocVar :: String -> State Env Ident
@@ -51,9 +55,9 @@ newLocVar s = do
     return $ Ident $ "%" ++ s ++ show v
 
 -- extendVar maps a Javalette variable to a LLVM variable name
-extendVar :: Ident -> String -> State Env Ident
-extendVar id lId = do
-    var <- newLocVar lId
+extendVar :: Ident -> State Env Ident
+extendVar id = do
+    var <- newDefVar
     modify (\env -> env{vars = M.insert id var (vars env)})
     return var
 

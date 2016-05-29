@@ -3,12 +3,45 @@ cd src
 make
 cd ..
 
-rm main.*
-rm a.out
+cd graderTestSuite/good
+rm *.ll
+rm *.bc
+cd ../..
 
-rm test.ll
-rm test.bc
-./jlc test.jl
+./jlc graderTestSuite/good/core001.jl
+./jlc graderTestSuite/good/core002.jl
+./jlc graderTestSuite/good/core003.jl
+./jlc graderTestSuite/good/core004.jl
+./jlc graderTestSuite/good/core005.jl
+./jlc graderTestSuite/good/core006.jl
+./jlc graderTestSuite/good/core007.jl
+./jlc graderTestSuite/good/core008.jl
+./jlc graderTestSuite/good/core009.jl
+./jlc graderTestSuite/good/core010.jl
+./jlc graderTestSuite/good/core011.jl
+./jlc graderTestSuite/good/core012.jl
+./jlc graderTestSuite/good/core013.jl
+./jlc graderTestSuite/good/core014.jl
+./jlc graderTestSuite/good/core015.jl
+./jlc graderTestSuite/good/core016.jl
+./jlc graderTestSuite/good/core017.jl
+./jlc graderTestSuite/good/core018.jl
+./jlc graderTestSuite/good/core019.jl
+./jlc graderTestSuite/good/core020.jl
+./jlc graderTestSuite/good/core021.jl
+./jlc graderTestSuite/good/core022.jl
+./jlc graderTestSuite/good/core023.jl
+./jlc graderTestSuite/good/core024.jl
+./jlc graderTestSuite/good/core025.jl
+./jlc graderTestSuite/good/core026.jl
+./jlc graderTestSuite/good/core027.jl
+./jlc graderTestSuite/good/core028.jl
+./jlc graderTestSuite/good/core029.jl
+./jlc graderTestSuite/good/core030.jl
+./jlc graderTestSuite/good/intarith.jl
+./jlc graderTestSuite/good/intarith2.jl
+./jlc graderTestSuite/good/intarith3.jl
+./jlc graderTestSuite/good/intarith4.jl
+./jlc graderTestSuite/good/intarith5.jl
 
-cat test.ll
-./a.out
+

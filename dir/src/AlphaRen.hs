@@ -39,6 +39,7 @@ newCxt = modify (\env -> env{cxts = (M.empty):(cxts env)})
 rmCxt :: AlphaRenM ()
 rmCxt = modify (\env -> env{cxts = tail (cxts env)})
 
+-- newVar creates a new variable with the next free name
 newVar :: AlphaRenM Ident
 newVar = do
     env <- get
@@ -220,7 +221,7 @@ renameStm (SExp exp)           = do
     exp' <- renameExp exp
     return  $ SExp exp'
 
- 
+-- renameDecl takes a list of items and renames them all 
 renameDecl :: [Item] -> AlphaRenM [Item]
 renameDecl []           = return []
 renameDecl (item:items) = case item of

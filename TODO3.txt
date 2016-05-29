@@ -9,16 +9,6 @@ EArrInd id e                X
 
 
 
-
-TODO när allt allnat är klart
------------------------------
-Innehåller Makefile allt som behövs för labb C? Är det något nytt sedan labb B?
-
-Gör internal stm för free(a)?
-
-Skapa funktion som anropar newLocVar och en som anropar extendVar, båda med
-inparameter "t".
-
 Tips
 ----
 Arrayerna vi använder i LLVM kallas "Pascal style"
